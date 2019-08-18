@@ -59,7 +59,15 @@ class ChannelFile(object):
     def save_to_pickle(self, file_name):
         with open(file_name, "wb") as output_pickle:
             pickle.dump(self, output_pickle)
-    
+  
+    def load_from_pickle(self, file_name):
+        try:
+            with open(file_name, "rb") as input_pickle:
+                self = pickle.load(input_pickle)
+        except FileNotFoundError:
+            print("{0} does not exist. Please try another file name.".format(file_name))
+            sys.exit()
+        
     def _get_flat_array(self, array):
         print("Flattening array. Not the quickest..")
         flat_array = np.array([])
