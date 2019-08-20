@@ -1,19 +1,27 @@
 from numba import njit
 from math import sqrt
+from ColocalisationResult import ColocalisationResult
+
 
 class Colocalisation(object):
     def __init__(self, channels_arr=None, xy_resolution=0.102, z_resolution=0.07,
                 max_distance=0.5, min_overlap=0.1):
         if channels_arr:
             self.channels_arr = channels_arr
+            self.channel_names = [channel.name for channel in channels_arr]
+            self.results_arr = [ColocalisationSave(self.channels_arr[i].name, 
+                                                   len(elf.channels_arr[i]).centroids),
+                                                    [names for names in self.channel_names
+                                                    if names not self.channels_arr[i].name])
+                                                    for i in range(len(channels_arr))]
         self.xy_resolution = xy_resolution
         self.z_resolution = z_resolution
         self.max_distance = max_distance
         self.min_overlap = min_overlap
         
+        
     def set_channels_arr(self, channels_arr):
         self.channels_arr = channels_arr
-    
     
     
     def fill_distance_jit(channels):
@@ -27,6 +35,7 @@ class Colocalisation(object):
                         channels[channel_i]["distance"] = distance
             end = time.time()
             print("time = {0}s, iterations = {1}".format(end-start, iterations))
+
 
     @njit(cache=True, fastmath=True)
     def _get_best_distance(centroids, centroids_list, xy_resolution=0.102,

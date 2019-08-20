@@ -10,8 +10,9 @@ class ChannelFile(object):
     data."""
 
     def __init__(self, name, file_name=None, plugin=None):
-        self.file_name = name
+        self.name = name
         if file_name:
+            self.file_name = file_name
             self.load_tiff(file_name)
 
     def load_tiff(self, file_name, plugin="pil"):
