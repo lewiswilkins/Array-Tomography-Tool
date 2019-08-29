@@ -7,34 +7,40 @@ class Colocalisation(object):
     def __init__(self, channels_arr=None, xy_resolution=0.102, z_resolution=0.07,
                 max_distance=0.5, min_overlap=0.1):
         if channels_arr:
-            self.channels_arr = channels_arr
+            self.channels_arr  = channels_arr
             self.channel_names = [channel.name for channel in channels_arr]
-            self.results_arr = [ColocalisationSave(self.channels_arr[i].name, 
+            self.results_arr   = [ColocalisationSave(self.channels_arr[i].name, 
                                                    len(elf.channels_arr[i]).centroids),
                                                     [names for names in self.channel_names
                                                     if names not self.channels_arr[i].name])
                                                     for i in range(len(channels_arr))]
-        self.xy_resolution = xy_resolution
-        self.z_resolution = z_resolution
-        self.max_distance = max_distance
-        self.min_overlap = min_overlap
+        self.xy_resolution     = xy_resolution
+        self.z_resolution      = z_resolution
+        self.max_distance      = max_distance
+        self.min_overlap       = min_overlap
         
         
     def set_channels_arr(self, channels_arr):
         self.channels_arr = channels_arr
     
     
-    def run_distance(self):
+    def run_colocalisation(self):
         for i,channel_i in enumerate(self.channels_arr):
             print("Comparing {0} with all other channels.".format(channel_i.name))
-            for ii,centroid_i in enumerate(channels_i.centroids):
+            for ii in range(len(channels_i.centroids)):
                 for channel_j in self.channels_arr:
-                    centroids_j = channel_j.centroids
-                    distance = self._get_best_distance(centroid_i, centroids_j,
-                                            self.xy_resolution, self.z_resolution)
-                    if distance < self.max_distance:
-                        self.results_arr[i].colocalisation(ii)[channel_j] = 1
+                    if channel_i.colocalisation_type[channel_j.name] == "distance":
+                        centroid_i = self.channels_arr.centroids[ii]
+                        self._run_distance(centroid_i, channel_j)
+                    elif channel_i.colocalisation_type[channel_j.name] == "overlap":
+                        pass
 
+    def _run_distance(self, centroid_i, channel_j):
+                centroids_j = selchannel_j.centroids
+                distance = self._get_best_distance(centroid_i, centroids_j,
+                                        self.xy_resolution, self.z_resolution)
+                if distance < self.max_distance:
+                    self.results_arr[i].colocalisation(ii)[channel_j] = 1
 
     @njit(cache=True, fastmath=True)
     def _get_best_distance(self,centroids, centroids_list, xy_resolution=0.102,
@@ -48,3 +54,35 @@ class Colocalisation(object):
             if distance < best_distance:
                 best_distance = distance
         return best_distance
+
+
+    def _run_overlap(self):
+        pass
+    
+    
+    @njit
+    def _get_best_overlap(self, coords_i, coords_list_j, index_location):
+        previous_index = 0
+        overlap = 0
+        #loop over the index locations - basically loop over objects
+        for i in range(len(index_location)):
+            index = index_location[i] + previous_index
+            coordiante_j = coords_list_j[previous_index:index] #get the section of array which is curen obj
+            coordiante_length = int(len(coordiante_j)/3) 
+            coordiante_j_reshape = coordiante_j.reshape((coordiante_length, 3))#reshape to original
+            
+            #now check how many overlap - doing manually because intersect1d is not avaiblable in numba
+            n_overlapping = 0
+            for ii in range(len(coords_i)):
+                for jj in range(ii, len(coordiante_j_reshape)):
+                    print(coords_i[ii],coordiante_j_reshape[jj]) 
+    #                 if coords_i[ii] == coordiante_j_reshape[jj]:
+    #                     n_overlapping+=1
+            #what we really care about is the max number of overlaps between any combination
+            if n_overlapping > overlap:
+                overlap = n_overlapping
+            previous_index = index
+    #   
+        #return the max
+        return overlap
+            pass

@@ -40,22 +40,15 @@ class ChannelFile(object):
             print("No regionprops present! Please call get_regionprops first.")
             sys.exit()
     
-    def get_pixel_list(self, flattened=True):
-        if flattened:
-            try:
-                temp_pixel_list = np.array([np.array(x.coords).flatten() for x in self.image_regionprops])
-                self.pixel_list = self._get_flat_array(temp_pixel_list)
-                self.pixel_list_index = np.array([len(x) for x in temp_pixel_list]) 
-            except AttributeError:
-                print("No regionprops present! Please call get_regionprops first.")
-                sys.exit()
-        else:
-            print("Warning: non-flattened pixel list cannot be used with colocalisation!")
-            try:
-                self.pixel_list = np.array([np.array(x.coords).flatten() for x in self.image_regionprops])
-            except AttributeError:
-                print("No regionprops present! Please call get_regionprops first.")
-                sys.exit()
+    def get_pixel_list(self):
+        try:
+            self.pixel_list = np.array([np.array(x.coords).flatten() for x in self.image_regionprops])
+            self.pixel_list_flat = self._get_flat_array(self.pixel_list)
+            self.pixel_list_index = np.array([len(x) for x in self.pixel_list]) 
+        except AttributeError:
+            print("No regionprops present! Please call get_regionprops first.")
+            sys.exit()
+    
 
     def save_to_pickle(self, file_name):
         with open(file_name, "wb") as output_pickle:
