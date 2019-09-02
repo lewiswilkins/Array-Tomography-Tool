@@ -15,7 +15,7 @@ if __name__ == "__main__":
     in_dir = input("Directory containing imgage stacks: ")
     out_dir = input("Output directory to store pickle files: ")
     check_dir_exists(out_dir)
-
+    
     image_stacks = glob.glob("{0}/*.tif".format(in_dir))
 
     for stack in image_stacks:

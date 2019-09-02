@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     in_dir = "Results/"
     channel_names = ["PSD","ALZ50", "SY38"]
-    
+    out_dir = "Results/"
  
     colocalisation_type_config = "test/colocalisation_types.yaml"
 
@@ -69,5 +69,5 @@ if __name__ == "__main__":
 
         colocalisation = Colocalisation.Colocalisation(channel_files)
         colocalisation.run_colocalisation()
-
+        colocalisation.save_results(out_dir)
         
