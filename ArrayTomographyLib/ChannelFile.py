@@ -11,9 +11,17 @@ class ChannelFile(object):
 
     def __init__(self, name, file_name=None, plugin=None):
         self.name = name
+        self.channel_name = self.name.split("-")[-1]
         if file_name:
             self.file_name = file_name
             self.load_tiff(file_name)
+        self.image_labels = None
+        self.image_regionprops = None
+        self.centroids = None
+        self.pixel_list = None
+        self.pixel_list_flat = None
+        self.pixel_list_index = None
+        self.colocalisation_types = None
 
     def load_tiff(self, file_name, plugin="pil"):
         self.file_name = file_name
@@ -23,9 +31,11 @@ class ChannelFile(object):
             print("File not found!")
             sys.exit()
     
+
     def get_lables(self, opt=None):
         self.image_labels = measure.label(self.image)
-        
+
+
     def get_regionprops(self):
         try:
             self.image_regionprops = measure.regionprops(self.image_labels)
@@ -58,10 +68,13 @@ class ChannelFile(object):
         try:
             with open(file_name, "rb") as input_pickle:
                 self = pickle.load(input_pickle)
+            return self 
         except FileNotFoundError:
             print("{0} does not exist. Please try another file name.".format(file_name))
             sys.exit()
-    
+        
+
+
     def set_colocalisation_types(self, colocalisation_types):
         self.colocalisation_types = colocalisation_types
         
@@ -69,7 +82,7 @@ class ChannelFile(object):
         print("Flattening array. Not the quickest..")
         flat_array = np.array([])
         for i in range(len(array)):
-            flat_array = np.concatenate((flat_array,array[i]))
+            flat_array = np.concatenate((flat_array,array[i].flatten()))
         return flat_array
 
 
