@@ -32,8 +32,8 @@ class ChannelFile(object):
             sys.exit()
     
 
-    def get_lables(self, opt=None):
-        self.image_labels = measure.label(self.image)
+    def get_lables(self, opt=1):
+        self.image_labels = measure.label(self.image, connectivity=opt)
 
 
     def get_regionprops(self):
