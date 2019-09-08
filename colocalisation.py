@@ -1,5 +1,5 @@
-from ArrayTomographyLib import Colocalisation, ChannelFile
-from ArrayTomographyLib import ColocalisationResult
+from array_tomography_lib import colocalisation, channel_file
+from array_tomography_lib import colocalisation_result
 import os
 import yaml
 import glob

@@ -73,7 +73,7 @@ class ChannelFile:
             sys.exit()
 
     def set_colocalisation_types(self, colocalisation_types):
-        self.colocalisation_types = colocalisation_types
+        self.colocalisation_types = colocalisation_types`
 
     def _get_flat_array(self, array):
         print("Flattening array. Not the quickest..")
