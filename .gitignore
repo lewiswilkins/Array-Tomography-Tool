@@ -1,2 +1,5 @@
 *.pyc
 __*__
+test_data/
+.vscode/
+.DS_Store
