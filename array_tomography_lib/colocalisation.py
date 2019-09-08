@@ -5,7 +5,7 @@ import numpy as np
 from numba import njit, prange
 import progressbar
 
-from array_tomography_lib import ColocalisationResult
+from array_tomography_lib import colocalisation_result
 
 
 class Colocalisation:
@@ -21,7 +21,7 @@ class Colocalisation:
             self.channels_arr = channels_arr
             self.channel_names = [channel.channel_name for channel in channels_arr]
             self.results_arr = [
-                ColocalisationResult.ColocalisationResult(
+                colocalisation_result.ColocalisationResult(
                     self.channels_arr[i].name,
                     self.channels_arr[i].channel_name,
                     len(self.channels_arr[i].centroids),
@@ -41,7 +41,7 @@ class Colocalisation:
     def set_channels_arr(self, channels_arr):
         self.channels_arr = channels_arr
 
-    # Runs the colocalisation code. Two options are distacne or overlap
+    # Runs the colocalisation code. Two options are distance or overlap
     def run_colocalisation(self):
         for i, channel_i in enumerate(self.channels_arr):
             print(f"Comparing {channel_i.name} with all other channels.")
