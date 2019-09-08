@@ -1,8 +1,8 @@
-from array_tomography_lib import colocalisation, channel_file
-from array_tomography_lib import colocalisation_result
+import glob
 import os
 import yaml
-import glob
+
+from array_tomography_lib import channel_file, colocalisation, colocalisation_result
 
 
 def check_dir_exists(dir_path):
@@ -70,6 +70,6 @@ if __name__ == "__main__":
 
         set_colocalisation_types(channel_files, colocalisation_types)
 
-        colocalisation = Colocalisation.Colocalisation(channel_files)
+        colocalisation = colocalisation.Colocalisation(channel_files)
         colocalisation.run_colocalisation()
         colocalisation.save_results(out_dir)

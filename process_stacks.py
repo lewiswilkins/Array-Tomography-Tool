@@ -23,7 +23,7 @@ if __name__ == "__main__":
     for stack in image_stacks:
         stack_name = stack.split("/")[-1].split(".")[0]
         print(f"Processing {stack_name}.")
-        channel_file = ChannelFile.ChannelFile(name=stack_name, file_name=stack)
+        channel_file = channel_file.ChannelFile(name=stack_name, file_name=stack)
         channel_file.get_lables()
         channel_file.get_regionprops()
         channel_file.get_centroids()
