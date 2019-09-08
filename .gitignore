@@ -1,2 +1,4 @@
 *.pyc
 __*__
+test_data/
+.vscode/
