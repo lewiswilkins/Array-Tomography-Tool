@@ -1,6 +1,7 @@
-from ArrayTomographyLib import ChannelFile
 import glob
 import os
+
+from array_tomography_lib import channel_file
 
 
 def check_dir_exists(dir_path):
