@@ -55,8 +55,6 @@ def _read_config(config, channel_1, channel_2):
 def _compute_distance(
     channel_1, channel_2, xy_resolution=0.102, z_resolution=0.07, max_distance=0.5
 ):
-    """Compute the minimum distance between any pair of objects.
-        This will be O(mn) for n objects in ch1 and m in channel 2, which is too slow."""
     pass
 
 
