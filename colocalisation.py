@@ -70,6 +70,6 @@ if __name__ == "__main__":
 
         set_colocalisation_types(channel_files, colocalisation_types)
 
-        colocalisation = colocalisation.Colocalisation(channel_files)
-        colocalisation.run_colocalisation()
-        colocalisation.save_results(out_dir)
+        colo = colocalisation.Colocalisation(channel_files)
+        colo.run_colocalisation()
+        colo.save_results(out_dir)
