@@ -13,16 +13,16 @@ WORKING_DIR = "test_data"
 def main():
     print("Running colocalisation")
 
-    # args = parse_args()
-    # in_dir = args.input
-    # out_dir = args.output
-    # config_path = args.config
+    args = parse_args()
+    in_dir = args.input
+    out_dir = args.output
+    config_path = args.config
 
-    # config = parse_config(config_path)
-    # print(config)
+    config = parse_config(config_path)
+    print(config)
 
-    # for case_stack in get_stack_case_numbers(in_dir):
-    #     process_stack(case_stack, config, in_dir)
+    for case_stack in get_stack_case_numbers(in_dir):
+        process_stack(case_stack, config, in_dir)
 
 
 def process_stack(case_stack, config, in_dir):
