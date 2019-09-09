@@ -23,10 +23,10 @@ if __name__ == "__main__":
     for stack in image_stacks:
         stack_name = stack.split("/")[-1].split(".")[0]
         print(f"Processing {stack_name}.")
-        channel_file = channel_file.ChannelFile(name=stack_name, file_name=stack)
-        channel_file.get_lables()
-        channel_file.get_regionprops()
-        channel_file.get_centroids()
-        channel_file.get_pixel_list()
+        channel = channel_file.ChannelFile(name=stack_name, file_name=stack)
+        channel.get_lables()
+        channel.get_regionprops()
+        channel.get_centroids()
+        channel.get_pixel_list()
 
-        channel_file.save_to_pickle(file_name=f"{out_dir}/{stack_name}.pickle")
+        channel.save_to_pickle(file_name=f"{out_dir}/{stack_name}.pickle")

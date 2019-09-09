@@ -53,8 +53,8 @@ class ChannelFile:
     def get_pixel_list(self):
         try:
             self.pixel_list = np.array([np.array(x.coords) for x in self.image_regionprops])
-            self.pixel_list_flat = self._get_flat_array(self.pixel_list)
-            self.pixel_list_index = np.array([len(x.flatten()) for x in self.pixel_list])
+            # self.pixel_list_flat = self._get_flat_array(self.pixel_list)
+            # self.pixel_list_index = np.array([len(x.flatten()) for x in self.pixel_list])
         except AttributeError:
             print("No regionprops present! Please call get_regionprops first.")
             sys.exit()
