@@ -1,35 +1,41 @@
 import itertools
 import time
 from math import sqrt
+from multiprocessing import Pool
 
 import numpy as np
-from numba import njit, prange
 import progressbar
+from numba import njit, prange
+from PIL import Image
+from skimage import measure
 
 from array_tomography_lib import colocalisation_result
 
 
-def colocalise_pairwise(channels, channel_config):
-    """For each pair of channels, perform the colocalisation given in the config
+def colocalise_pairwise(channels, config):
+    """For each pair of channels, perform the type of colocalisation given in the config
        Returns a dict of ColocolisationResults"""
     results = {}
-    for channel_1, channel_2 in itertools.product(channels, 2):
-        results[tuple(sorted(channel_1, channel_2))] = colocalise(channel_1, channel_2, config)
+    for channel_1, channel_2 in itertools.product(channels, repeat=2):
+        results[tuple(sorted((channel_1.name, channel_2.name)))] = colocalise(
+            channel_1, channel_2, config
+        )
     return results
 
 
-def get_operation(config, ch_1, ch_2):
-    # It'll be best to key the config by the sorted pairs of channels to avoid
-    # duplicate keys (i,j and j,i) and to reduce the dict to one layer
-    return config.get(tuple(sorted(channel_1, channel_2)))
-
-
 def colocalise(channel_1, channel_2, config):
-    operation = get_operation(channel_config, channel_1, channel_2)
+    operation = get_operation(config, channel_1.channel_name, channel_2.channel_name)
     if operation == "distance":
-        return distance_colo(channel_1, channel_2)
+        # return distance_colo(channel_1, channel_2)
+        return
     elif operation == "overlap":
         return overlap_colo(channel_1, channel_2)
+
+
+def get_operation(config, channel_1, channel_2):
+    # It'll be best to key the config by the sorted pairs of channels to avoid
+    # duplicate keys (i,j and j,i) and to reduce the dict to one layer
+    return config.get(tuple(sorted((channel_1, channel_2))))
 
 
 def overlap_colo(channel_1, channel_2):
@@ -38,6 +44,17 @@ def overlap_colo(channel_1, channel_2):
        Compute the regionprops.area for the masked image.
        For each image in channel_1, divide the area of the image by the area of the masked image."""
     overlapping_pixels = get_overlap_mask(channel_1.image_labels, channel_2.image_labels)
+    masked_regions = np.ma.masked_array(channel_1.image_labels, mask=~overlapping_pixels)
+    overlapping_regions = measure.regionprops(masked_regions)
+    overlaps = []
+    for region, overlap in zip(channel_1.image_regionprops, overlapping_regions):
+        overlap_fraction = overlap.area / region.area
+        if overlap_fraction > 0.25:
+            overlaps.append(overlap_fraction)
+    print(f"{channel_1.name} and {channel_2.name}: ")
+    print(f"{len(channel_1.pixel_list)} objects in channel 1")
+    print(f"Found {len(overlaps)} overlapping objects")
+    print(f"mean overlap is {sum(overlaps)/len(overlaps)}")
 
 
 def get_overlap_mask(image_1, image_2):
