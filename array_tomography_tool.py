@@ -1,3 +1,5 @@
+#!/bin/python
+
 import argparse
 import glob
 import os
@@ -6,20 +8,17 @@ import yaml
 
 from array_tomography_lib import channel_file, colocalisation, colocalisation_result
 
-CHANNEL_NAMES = {"PSD", "ALZ50", "SY38"}
+CHANNEL_NAMES = ["PSD", "ALZ50", "SY38"]
 WORKING_DIR = "test_data"
 
 
 def main():
-    print("Running colocalisation")
-
     args = parse_args()
     in_dir = args.input
     out_dir = args.output
     config_path = args.config
 
     config = parse_config(config_path)
-    print(config)
 
     for case_stack in get_stack_case_numbers(in_dir):
         process_stack(case_stack, config, in_dir)
@@ -29,12 +28,6 @@ def process_stack(case_stack, config, in_dir):
     print(f"Processing {case_stack}")
     channel_files = list(load_or_compute_channel_files(case_stack, in_dir))
     colocalisation.colocalise_pairwise(channel_files, config)
-
-
-#     set_colocalisation_types(channel_files, colocalisation_types)
-#     colo = colocalisation.Colocalisation(channel_files)
-#     colo.run_colocalisation()
-#     colo.save_results(out_dir)
 
 
 def parse_args():
