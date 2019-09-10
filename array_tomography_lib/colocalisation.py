@@ -40,8 +40,8 @@ def colocalise(channel_1, channel_2, method):
        Returns: a dict of (channel_1, channel_2) -> ColocolisationResult"""
 
     if method == "distance":
-        # return _compute_distance(channel_1, channel_2)
-        return
+        return _compute_distance(channel_1, channel_2)
+        # return
     elif method == "overlap":
         return _compute_overlap(channel_1, channel_2)
 
@@ -55,7 +55,33 @@ def _read_config(config, channel_1, channel_2):
 def _compute_distance(
     channel_1, channel_2, xy_resolution=0.102, z_resolution=0.07, max_distance=0.5
 ):
-    pass
+    """Compute the distances between each object in channel_1 and channel_2.
+       Find the number of objects in channel_1 which are within max_distance of channel_2."""
+    channel_1_centroids = channel_1.centroids
+    channel_2_centroids = channel_2.centroids
+    min_distances = []
+    for channel_1_centroid in channel_1_centroids:
+        distances = _find_best_distance(channel_1_centroid, channel_2_centroids)
+        min_distances.append(distances.min())
+    print(f"{channel_1.name} and {channel_2.name}: ")
+    print(f"{len(channel_1.centroids)} objects in channel 1")
+    print(f"Found {len(min_distances)} objects within {max_distance}")
+
+
+
+@njit(cache=True, fastmath=True)
+def _find_best_distance(channel_1_centroid, channel_2_centroids,
+        xy_resolution=0.102, z_resolution=0.07):
+    """Computes the distances between object from channel_1 and all objects in channel_2.
+       Returns a numpy array of the distances."""
+    difference = channel_2_centroids - channel_1_centroid
+    difference_resolved = difference * np.array([xy_resolution, xy_resolution, z_resolution])
+    distances = []
+    for i in range(len(difference_resolved)):
+        distances.append((difference_resolved**2).sum())
+    
+    return np.array(distances)
+    
 
 
 def _compute_overlap(channel_1, channel_2, min_overlap=0.25):
