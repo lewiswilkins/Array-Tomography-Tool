@@ -1,11 +1,84 @@
+import itertools
 import time
 from math import sqrt
+from multiprocessing import Pool
+from typing import List
 
 import numpy as np
-from numba import njit, prange
 import progressbar
+from numba import njit, prange
+from PIL import Image
+from skimage import measure
 
 from array_tomography_lib import colocalisation_result
+from array_tomography_lib.channel_file import ChannelFile
+
+
+def colocalise_pairwise(channels: List[ChannelFile], config):
+    """Computes the colocalisation for each pair of channels, according to the method.
+        Args:
+            channels: A list of ChannelFile
+            config: a dict whose keys are (channel_1, channel_2) tuples and whose values are the
+                    method of colocalisation to perform, either 'distance' or 'overlap'
+       Returns: a dict of (channel_1, channel_2) -> ColocolisationResult"""
+
+    results = {}
+    for channel_1, channel_2 in itertools.product(channels, repeat=2):
+        method = _read_config(config, channel_1.channel_name, channel_2.channel_name)
+        results[tuple(sorted((channel_1.name, channel_2.name)))] = colocalise(
+            channel_1, channel_2, method
+        )
+    return results
+
+
+def colocalise(channel_1, channel_2, method):
+    """Computes the colocalisation for a pair of channels with the given method.
+        Args:
+            channel_1: ChannelFile
+            channel_2: ChannelFile
+            method: the type of colocalisation to perform, either either 'distance' or 'overlap'
+       Returns: a dict of (channel_1, channel_2) -> ColocolisationResult"""
+
+    if method == "distance":
+        # return _compute_distance(channel_1, channel_2)
+        return
+    elif method == "overlap":
+        return _compute_overlap(channel_1, channel_2)
+
+
+def _read_config(config, channel_1, channel_2):
+    # It'll be best to key the config by the sorted pairs of channels to avoid
+    # duplicate keys (i,j and j,i) and to reduce the dict to one layer
+    return config.get(tuple(sorted((channel_1, channel_2))))
+
+
+def _compute_distance(
+    channel_1, channel_2, xy_resolution=0.102, z_resolution=0.07, max_distance=0.5
+):
+    pass
+
+
+def _compute_overlap(channel_1, channel_2, min_overlap=0.25):
+    """Compute an image mask for pixels that are present in both channels.
+       Apply the mask to the labelled image.
+       Compute the regionprops.area for the masked image.
+       For each image in channel_1, divide the area of the image by the area of the masked image."""
+    overlapping_pixels = _get_overlap_mask(channel_1.image_labels, channel_2.image_labels)
+    masked_regions = np.ma.masked_array(channel_1.image_labels, mask=~overlapping_pixels)
+    overlapping_regions = measure.regionprops(masked_regions)
+    overlaps = []
+    for region, overlap in zip(channel_1.image_regionprops, overlapping_regions):
+        overlap_fraction = overlap.area / region.area
+        if overlap_fraction >= min_overlap:
+            overlaps.append(overlap_fraction)
+    print(f"{channel_1.name} and {channel_2.name}: ")
+    print(f"{len(channel_1.pixel_list)} objects in channel 1")
+    print(f"Found {len(overlaps)} overlapping objects")
+    print(f"mean overlap is {sum(overlaps)/len(overlaps)}")
+
+
+def _get_overlap_mask(image_1, image_2):
+    return np.logical_and(image_1, image_2)
 
 
 class Colocalisation:

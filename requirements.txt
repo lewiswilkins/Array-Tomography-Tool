@@ -1,4 +1,5 @@
 numba
 numpy
-scikit-image
 progressbar2
+pyyaml
+scikit-image
