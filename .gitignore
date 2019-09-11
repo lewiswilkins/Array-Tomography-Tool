@@ -3,3 +3,5 @@ __*__
 test_data/
 .vscode/
 .DS_Store
+.file_cache/
+.pytest_cache/
