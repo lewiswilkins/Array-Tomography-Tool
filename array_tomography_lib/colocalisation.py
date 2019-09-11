@@ -61,26 +61,72 @@ def _compute_distance(
     channel_2_centroids = channel_2.centroids
     min_distances = []
     for channel_1_centroid in channel_1_centroids:
-        distances = _find_best_distance(channel_1_centroid, channel_2_centroids)
-        min_distances.append(distances.min())
+        channel_2_cropped_centroids = _get_cropped_centroids(channel_2, channel_1_centroid, 10)
+        distances = _calculate_distances(channel_1_centroid, 
+                                         channel_2_cropped_centroids,
+                                         xy_resolution,
+                                         z_resolution)
+        min_distance = min(distances)
+        if min_distance < min_distance:
+            min_distances.append(min_distances)
+        
+
     print(f"{channel_1.name} and {channel_2.name}: ")
     print(f"{len(channel_1.centroids)} objects in channel 1")
     print(f"Found {len(min_distances)} objects within {max_distance}")
 
 
+def _get_cropped_centroids(channel, centroid, offset=10):
+    cropped_image = _get_cropped_image(channel.image, centroid, offset)
+    labels = measure.label(cropped_image)
+    regionprops = measure.regionprops(labels)
+    return regionprops.centroid
 
-@njit(cache=True, fastmath=True)
-def _find_best_distance(channel_1_centroid, channel_2_centroids,
-        xy_resolution=0.102, z_resolution=0.07):
-    """Computes the distances between object from channel_1 and all objects in channel_2.
-       Returns a numpy array of the distances."""
-    difference = channel_2_centroids - channel_1_centroid
+
+def _get_cropped_image(image, centroid, offset=10):
+    rounded_centroid = np.around(centroid)
+    y = rounded_centroid[1]
+    x = rounded_centroid[2]
+    y_max = image.shape[1]
+    x_max = image.shape[2]
+    x_up = _is_in_range(0, x_max, x+offset)
+    x_down = _is_in_range(0, x_max, x-offset)
+    y_up = _is_in_range(0, y_max, y+offset)
+    y_down = _is_in_range(0, y_max, y-offset)
+
+    return image[:,y_down:y_up,x_down:x_up]
+
+
+def _is_in_range(lower, upper, value):
+    if value < lower:
+        return lower
+    elif:
+        value > upper:
+        return upper
+    else:
+        return value
+
+def _calculate_distances(channel_1_centroid, channel_2_centroid_list, xy_resolution, z_resolution):
+    difference = channel_2_centroid_list - channel_1_centroid
     difference_resolved = difference * np.array([xy_resolution, xy_resolution, z_resolution])
     distances = []
-    for i in range(len(difference_resolved)):
+    for centroid in difference_resolved:
         distances.append((difference_resolved**2).sum())
+
+    return distances
+
+# @njit(cache=True, fastmath=True)
+# def _find_best_distance(channel_1_centroid, channel_2_centroids,
+#         xy_resolution=0.102, z_resolution=0.07):
+#     """Computes the distances between object from channel_1 and all objects in channel_2.
+#        Returns a numpy array of the distances."""
+#     difference = channel_2_centroids - channel_1_centroid
+#     difference_resolved = difference * np.array([xy_resolution, xy_resolution, z_resolution])
+#     distances = []
+#     for i in range(len(difference_resolved)):
+#         distances.append((difference_resolved**2).sum())
     
-    return np.array(distances)
+#     return np.array(distances)
     
 
 
