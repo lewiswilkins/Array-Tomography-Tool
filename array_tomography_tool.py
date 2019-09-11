@@ -46,7 +46,7 @@ def parse_args():
 
 def parse_config(config_path):
     with open(config_path) as f:
-        config_dict = yaml.load(f)
+        config_dict = yaml.load(f, Loader=yaml.Loader)
     return make_shallow_dict(config_dict)
 
 
