@@ -11,7 +11,7 @@ from PIL import Image
 from skimage import measure
 
 from array_tomography_lib import colocalisation_result
-from array_tomography_lib.channel_file import ChannelFile
+from array_tomography_lib import ChannelFile, ColocalisedChannelFile
 
 
 def colocalise_pairwise(channels: List[ChannelFile], config):
@@ -146,11 +146,17 @@ def _compute_overlap(channel_1, channel_2, min_overlap=0.25):
     for region, overlap in zip(channel_1.image_regionprops, overlapping_regions):
         overlap_fraction = overlap.area / region.area
         if overlap_fraction >= min_overlap:
-            overlaps.append(overlap_fraction)
+            overlaps.append((region.label, overlap_fraction))
     print(f"{channel_1.name} and {channel_2.name}: ")
     print(f"{len(channel_1.pixel_list)} objects in channel 1")
     print(f"Found {len(overlaps)} overlapping objects")
     print(f"mean overlap is {sum(overlaps)/len(overlaps)}")
+
+    colocalisation_channel_file = ColocalisedChannelFile()
+
+
+def _get_colocalised_image(original_image, label_list):
+    pass
 
 
 def _get_overlap_mask(image_1, image_2):
