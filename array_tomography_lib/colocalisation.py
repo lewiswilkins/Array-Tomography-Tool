@@ -24,6 +24,8 @@ def colocalise_pairwise(channels: List[ChannelFile], config):
 
     results = {}
     for channel_1, channel_2 in itertools.product(channels, repeat=2):
+        if channel_1 == channel_2:
+            continue
         method = _read_config(config, channel_1.channel_name, channel_2.channel_name)
         results[tuple(sorted((channel_1.name, channel_2.name)))] = colocalise(
             channel_1, channel_2, method
@@ -49,7 +51,7 @@ def colocalise(channel_1, channel_2, method):
 def _read_config(config, channel_1, channel_2):
     # It'll be best to key the config by the sorted pairs of channels to avoid
     # duplicate keys (i,j and j,i) and to reduce the dict to one layer
-    return config.get(tuple(sorted((channel_1, channel_2))))
+    return config[tuple(sorted((channel_1, channel_2)))]
 
 
 def _compute_distance(
@@ -62,14 +64,12 @@ def _compute_distance(
     min_distances = []
     for channel_1_centroid in channel_1_centroids:
         channel_2_cropped_centroids = _get_cropped_centroids(channel_2, channel_1_centroid, 10)
-        distances = _calculate_distances(channel_1_centroid, 
-                                         channel_2_cropped_centroids,
-                                         xy_resolution,
-                                         z_resolution)
+        distances = _calculate_distances(
+            channel_1_centroid, channel_2_cropped_centroids, xy_resolution, z_resolution
+        )
         min_distance = min(distances)
         if min_distance < min_distance:
             min_distances.append(min_distances)
-        
 
     print(f"{channel_1.name} and {channel_2.name}: ")
     print(f"{len(channel_1.centroids)} objects in channel 1")
@@ -89,31 +89,32 @@ def _get_cropped_image(image, centroid, offset=10):
     x = rounded_centroid[2]
     y_max = image.shape[1]
     x_max = image.shape[2]
-    x_up = _is_in_range(0, x_max, x+offset)
-    x_down = _is_in_range(0, x_max, x-offset)
-    y_up = _is_in_range(0, y_max, y+offset)
-    y_down = _is_in_range(0, y_max, y-offset)
+    x_up = _is_in_range(0, x_max, x + offset)
+    x_down = _is_in_range(0, x_max, x - offset)
+    y_up = _is_in_range(0, y_max, y + offset)
+    y_down = _is_in_range(0, y_max, y - offset)
 
-    return image[:,y_down:y_up,x_down:x_up]
+    return image[:, y_down:y_up, x_down:x_up]
 
 
 def _is_in_range(lower, upper, value):
     if value < lower:
         return lower
-    elif:
-        value > upper:
+    elif value > upper:
         return upper
     else:
         return value
+
 
 def _calculate_distances(channel_1_centroid, channel_2_centroid_list, xy_resolution, z_resolution):
     difference = channel_2_centroid_list - channel_1_centroid
     difference_resolved = difference * np.array([xy_resolution, xy_resolution, z_resolution])
     distances = []
     for centroid in difference_resolved:
-        distances.append((difference_resolved**2).sum())
+        distances.append((difference_resolved ** 2).sum())
 
     return distances
+
 
 # @njit(cache=True, fastmath=True)
 # def _find_best_distance(channel_1_centroid, channel_2_centroids,
@@ -125,9 +126,8 @@ def _calculate_distances(channel_1_centroid, channel_2_centroid_list, xy_resolut
 #     distances = []
 #     for i in range(len(difference_resolved)):
 #         distances.append((difference_resolved**2).sum())
-    
+
 #     return np.array(distances)
-    
 
 
 def _compute_overlap(channel_1, channel_2, min_overlap=0.25):
