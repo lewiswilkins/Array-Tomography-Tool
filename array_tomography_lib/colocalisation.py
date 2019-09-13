@@ -11,10 +11,9 @@ from PIL import Image
 from skimage import measure
 
 from array_tomography_lib import colocalisation_result
-from array_tomography_lib import ChannelFile, ColocalisedChannelFile
 
 
-def colocalise_pairwise(channels: List[ChannelFile], config):
+def colocalise_pairwise(channels, config):
     """Computes the colocalisation for each pair of channels, according to the method.
         Args:
             channels: A list of ChannelFile

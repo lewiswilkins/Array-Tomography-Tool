@@ -1,1 +1,1 @@
-from channel_file import *
+from .channel_file import ChannelFile

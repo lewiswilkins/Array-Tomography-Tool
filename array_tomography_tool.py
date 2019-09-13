@@ -3,10 +3,11 @@
 import argparse
 import glob
 import os
+import re
 
 import yaml
 
-from array_tomography_lib import channel_file, colocalisation, colocalisation_result
+from array_tomography_lib import ChannelFile, colocalisation
 
 CHANNEL_NAMES = ["PSD", "ALZ50", "SY38"]
 CACHE_DIR = ".file_cache"
@@ -20,8 +21,8 @@ def main():
 
     config = _parse_config(config_path)
 
-    for case_stack in get_case_stack_numbers(in_dir):
-        process_stack(case_stack, config, in_dir)
+    for case_number, stack_number in get_case_stack_numbers(in_dir):
+        process_stack(case_number, stack_number, config, in_dir)
 
 
 def _parse_args():
@@ -45,27 +46,36 @@ def _parse_args():
     return parser.parse_args()
 
 
-def _parse_config(config_path):
+def _parse_config(config_path: str) -> dict:
     with open(config_path) as f:
-        config_dict = yaml.load(f, Loader=yaml.FullLoader)
+        config_dict = yaml.load(f, Loader=yaml.Loader)
     return _make_shallow_dict(config_dict)
 
 
-def process_stack(case_stack, config, in_dir):
-    print(f"Processing {case_stack}")
-    channel_files = load_or_compute_channel_files(case_stack, in_dir)
-    results = colocalisation.colocalise_pairwise(channel_files, config)
+def process_stack(case_number: str, stack_number: str, config: dict, in_dir: str):
+    print(f"Processing {case_number}-{stack_number}")
+    for channel_filepath in get_channels(case_number, stack_number, in_dir):
+        channel_file = ChannelFile.from_tiff(channel_filepath, config)
+        print(len(channel_file.labels))
+    # results = colocalisation.colocalise_pairwise(channel_files, config)
     # now print the
 
 
 def get_case_stack_numbers(dir_path):
     case_stack_numbers = set()
+    r = re.compile(r"^.*\/(\d+)-(stack\d+)-.*.tif")
     for filename in glob.glob(f"{dir_path}/*.tif"):
-        number = filename.split("/")[-1].split(".")[0].split("-")
-        number = f"{number[0]}-{number[1]}"
-        case_stack_numbers.add(number)
+        match = r.match(filename)
+        case_number, stack_number = match.group(1), match.group(2)
+        case_stack_numbers.add((case_number, stack_number))
 
     return list(case_stack_numbers)
+
+
+def get_channels(case_number, stack_number, dir_path):
+    r = re.compile(rf".*/{case_number}-{stack_number}-.*\.tif")
+    channels = [filepath for filepath in glob.glob(f"{dir_path}/*.tif") if r.match(filepath)]
+    return channels
 
 
 def load_or_compute_channel_files(case_stack_number, in_dir):

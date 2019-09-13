@@ -3,27 +3,6 @@ from itertools import product
 
 import numpy as np
 
-"""
-For each channel:
-    colo possibility for each other channel(s)
-    * can be output as a list of colo possibilities
-
-For each colo possibility: (could be more than two colocalised channels)
-    image of colocalised objects
-    stats about image: median size, number
-    colo type
-    * can be output as an image plus a few numbers
-"""
-
-
-class ColocalisationPossibility:
-    """The colocalisation between a subset of the channels in one image stack"""
-
-    def __init__(self, case_stack, channel_names, image):
-        self.case_stack = case_stack
-        self.channel_names = channel_names
-        self.image = image
-
 
 class ColocalisationResult:
     """The colocalisations for one image stack. Contains a list of all colocalisation
