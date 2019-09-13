@@ -13,24 +13,30 @@ CACHE_DIR = ".file_cache"
 
 
 def main():
-    args = parse_args()
+    args = _parse_args()
     in_dir = args.input
     out_dir = args.output
     config_path = args.config
 
-    config = parse_config(config_path)
+    config = _parse_config(config_path)
 
-    for case_stack in get_stack_case_numbers(in_dir):
-        print(case_stack)
+    for case_stack in get_case_stack_numbers(in_dir):
         process_stack(case_stack, config, in_dir)
 
 
-def parse_args():
+def _parse_args():
     parser = argparse.ArgumentParser(
         description="Compute the colocalisation between channels of input images."
     )
-    parser.add_argument("--input", default="test_data", help="A directory to read input files from")
-    parser.add_argument("--output", default="test_data", help="A directory to store output data")
+    parser.add_argument(
+        "--input", default="test_data", help="The directory where the input files are stored."
+    )
+    parser.add_argument(
+        "--output", default="test_data", help="The directory in which to put the output files."
+    )
+    parser.add_argument(
+        "--print", action="store_true", help="Prints a summary of the results to screen."
+    )
     parser.add_argument(
         "--config",
         default="test_data/colocalisation_types.yaml",
@@ -39,46 +45,27 @@ def parse_args():
     return parser.parse_args()
 
 
-def parse_config(config_path):
+def _parse_config(config_path):
     with open(config_path) as f:
         config_dict = yaml.load(f, Loader=yaml.FullLoader)
-    return make_shallow_dict(config_dict)
+    return _make_shallow_dict(config_dict)
 
 
 def process_stack(case_stack, config, in_dir):
     print(f"Processing {case_stack}")
     channel_files = load_or_compute_channel_files(case_stack, in_dir)
-    colocalisation.colocalise_pairwise(channel_files, config)
+    results = colocalisation.colocalise_pairwise(channel_files, config)
+    # now print the
 
 
-def make_shallow_dict(config_dict):
-    """Converts the two-level deep config into a dict"""
-    shallow_dict = {}
-    for k1, subdict in config_dict.items():
-        for k2, v in subdict.items():
-            shallow_dict[tuple(sorted((k1, k2)))] = v
-    return shallow_dict
-
-
-def mkdir_if_not_exists(dir_path):
-    if not os.path.isdir(dir_path):
-        print("Directory does not exist. Creating now!")
-        os.mkdir(dir_path)
-
-
-def load_colocalisation_types(file_path):
-    with open(file_path) as config_file:
-        return yaml.load(config_file)
-
-
-def get_stack_case_numbers(dir_path):
-    stack_case_numbers = set()
+def get_case_stack_numbers(dir_path):
+    case_stack_numbers = set()
     for filename in glob.glob(f"{dir_path}/*.tif"):
         number = filename.split("/")[-1].split(".")[0].split("-")
         number = f"{number[0]}-{number[1]}"
-        stack_case_numbers.add(number)
+        case_stack_numbers.add(number)
 
-    return list(stack_case_numbers)
+    return list(case_stack_numbers)
 
 
 def load_or_compute_channel_files(case_stack_number, in_dir):
@@ -91,7 +78,7 @@ def load_or_compute_channel_files(case_stack_number, in_dir):
 
 
 def load_channel_file(case_stack_number, channel):
-    mkdir_if_not_exists(CACHE_DIR)
+    _mkdir_if_not_exists(CACHE_DIR)
     channel_name = f"{case_stack_number}-{channel}"
     temp_channel_file = channel_file.ChannelFile(name=channel_name)
     loaded_channel_file = temp_channel_file.load_from_pickle(
@@ -114,10 +101,24 @@ def compute_channel_file(case_stack_number, channel_name, in_dir):
     return channel
 
 
-def set_colocalisation_types(channel_files, colocalisation_types):
-    for file in channel_files:
-        channel = file.name.split("-")[-1]
-        file.set_colocalisation_types(colocalisation_types[channel])
+def _make_shallow_dict(config_dict):
+    """Converts the two-level deep config into a dict"""
+    shallow_dict = {}
+    for k1, subdict in config_dict.items():
+        for k2, v in subdict.items():
+            shallow_dict[tuple(sorted((k1, k2)))] = v
+    return shallow_dict
+
+
+def _mkdir_if_not_exists(dir_path):
+    if not os.path.isdir(dir_path):
+        print("Directory does not exist. Creating now!")
+        os.mkdir(dir_path)
+
+
+def _load_colocalisation_types(file_path):
+    with open(file_path) as config_file:
+        return yaml.load(config_file)
 
 
 if __name__ == "__main__":
