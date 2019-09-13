@@ -11,17 +11,23 @@ class ChannelFile:
     """Contains one channel's image stack and associated properties.
     Image properties are calculated on-demand"""
 
-    def __init__(self, image: np.ndarray, case_number: str, stack_number: str, channel_name: str, config: dict):
+    def __init__(
+        self,
+        image: np.ndarray,
+        case_number: str,
+        stack_number: str,
+        channel_name: str,
+        config: dict,
+    ):
         self.image = image
         self.case_number = case_number
         self.stack_number = stack_number
         self.channel_name = channel_name
         self.config = config
         self._labelled_image = None
+        self._objects = None
         self._labels = None
-        self._props = None
         self._centroids = None
-
 
     @classmethod
     def from_tiff(cls, file_path, config):
@@ -31,36 +37,43 @@ class ChannelFile:
         case_number, stack_number, channel_name = cls._split_file_name(file_name)
         return cls(image, case_number, stack_number, channel_name, config)
 
-
     @classmethod
     def _split_file_path(cls, file_path):
-        file_name = file_path.rsplit("/",1)[-1].split(".")[0]
+        file_name = file_path.rsplit("/", 1)[-1].split(".")[0]
 
         return file_name
 
     @classmethod
-    def _split_file_name(cls, file_name)
+    def _split_file_name(cls, file_name):
         case_number, stack_number, channel_name = file_name.split("-")
 
         return case_number, stack_number, channel_name
 
     @property
+    def labelled_image(self):
+        if not self._labelled_image:
+            self._labelled_image = measure.label(
+                self.image, connectivity=self.config.get("connectivity", 1)
+            )
+        return self._labelled_image
+
+    @property
     def labels(self):
-        if not self._image_labels:
-            self._image_labels = measure.label(self.image, connectivity=self.config.get("connectivity", 1))
-        return self._image_labels
+        if not self._labels:
+            self._labels = [ob.label for ob in self.objects]
+        return self._labels
 
     @property
     def objects(self):
         if not self._objects:
-            self._objects = measure.regionprops(self.labels, cache=True)
+            self._objects = measure.regionprops(self.labelled_image, cache=False)
         return self._objects
 
     @property
     def centroids(self):
-        # warning this might behave fuckily, if so just use object.centroid directly
-        yield from (ob.centroid for ob in self.objects)
-
+        if not self._centroids:
+            self._centroids = [ob.centroid for ob in self.objects]
+        return self._centroids
 
     def colocalise_with(self, other_channel, method):
         colocalisation_channel_file = colocalisation.colocalise(self, other_channel, method)
@@ -83,13 +96,17 @@ class ChannelFile:
 
 
 class ColocalisedChannelFile(ChannelFile):
-    def __init__(self, image: np.ndarray, case_number: str, stack_number: str,
-                channel_name: str, config: dict, colocalised_with):
+    def __init__(
+        self,
+        image: np.ndarray,
+        case_number: str,
+        stack_number: str,
+        channel_name: str,
+        config: dict,
+        colocalised_with,
+    ):
         super().__init__(image, case_number, stack_number, channel_name)
         self.colocalised_with = colocalised_with
         self.overlap_list = None
         self.distance_list = None
         self.colocalisation_method = None
-
-
-        
