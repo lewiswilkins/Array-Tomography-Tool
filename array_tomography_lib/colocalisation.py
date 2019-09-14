@@ -146,15 +146,27 @@ def _compute_overlap(channel_1, channel_2, min_overlap=0.25):
         overlap_fraction = overlap.area / region.area
         if overlap_fraction >= min_overlap:
             overlaps.append((region.label, overlap_fraction))
+
+    # add function here to get image with original objects but only if they overlap
+    # _get_colocalised_image(original_image, label_list):
+
     print(f"{channel_1.name} and {channel_2.name}: ")
     print(f"{len(channel_1.pixel_list)} objects in channel 1")
     print(f"Found {len(overlaps)} overlapping objects")
     print(f"mean overlap is {sum(overlaps)/len(overlaps)}")
 
-    colocalisation_channel_file = ColocalisedChannelFile()
+    return colocalised_image, object_list
 
 
 def _get_colocalised_image(original_image, label_list):
+    # One option is to loop over each pixel in the image, and set it to
+    # zero unless it's in the set of labels. This woule be a good
+    # candidate for that cool JIT thing. Looking up values in a set
+    # is quick but maybe not quick enough for this, so it might be quicker
+    # to loop over all the coordinates of the pixels of the objects and set
+    # them in a new image. This method involves computing and storing the coordinates
+    # of the objects which will also be slow. We could implement both methods
+    # and compare.
     pass
 
 

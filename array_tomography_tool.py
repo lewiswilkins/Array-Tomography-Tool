@@ -54,11 +54,14 @@ def _parse_config(config_path: str) -> dict:
 
 def process_stack(case_number: str, stack_number: str, config: dict, in_dir: str):
     print(f"Processing {case_number}-{stack_number}")
+    channels = []
     for channel_filepath in get_channels(case_number, stack_number, in_dir):
         channel_file = ChannelFile.from_tiff(channel_filepath, config)
         print(len(channel_file.labels))
-    # results = colocalisation.colocalise_pairwise(channel_files, config)
-    # now print the
+        channels.append(channel_file)
+
+    method = config[channels[0][channels[1]]]
+    channels[0].colocalise_with(channels[1], method=method)
 
 
 def get_case_stack_numbers(dir_path):

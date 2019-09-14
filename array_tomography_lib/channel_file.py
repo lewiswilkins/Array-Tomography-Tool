@@ -76,7 +76,16 @@ class ChannelFile:
         return self._centroids
 
     def colocalise_with(self, other_channel, method):
-        colocalisation_channel_file = colocalisation.colocalise(self, other_channel, method)
+        colocalised_image, object_list = colocalisation.colocalise(self, other_channel, method)
+
+        colocalisation_channel_file = ColocalisedChannelFile(
+            image=colocalised_image,
+            case_number=self.case_number,
+            stack_number=self.stack_number,
+            channel_name=self.channel_name,
+            config=self.config,
+            colocalised_with=other_channel.channel_name,
+        )
 
         return colocalisation_channel_file
 
@@ -103,7 +112,7 @@ class ColocalisedChannelFile(ChannelFile):
         stack_number: str,
         channel_name: str,
         config: dict,
-        colocalised_with,
+        colocalised_with: str,
     ):
         super().__init__(image, case_number, stack_number, channel_name)
         self.colocalised_with = colocalised_with
