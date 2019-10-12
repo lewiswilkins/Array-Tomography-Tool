@@ -5,8 +5,11 @@ import numpy as np
 
 
 class ColocalisationResult:
-    def __init__(self, name, channel_name, n_objects, other_channels):
-        self.name = name
+    """The colocalisations for one image stack. Contains a list of all colocalisation
+    possibilities for every subset of channels"""
+
+    def __init__(self, case_stack, channel_name, n_objects, other_channels):
+        self.case_stack = case_stack
         self.channel_name = channel_name
         self.n_objects = n_objects
         self.all_channels = other_channels

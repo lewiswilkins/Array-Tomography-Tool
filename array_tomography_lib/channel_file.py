@@ -2,62 +2,100 @@ import pickle
 import sys
 
 import numpy as np
-
 from skimage import io, measure
+
+from array_tomography_lib import colocalisation
 
 
 class ChannelFile:
-    """ ChannelFile class for Array Tomography Tool. Each instance of the File class
-    will have one channels image stack in. It also stores a lot of the derived
-    data."""
+    """Contains one channel's image stack and associated properties.
+    Image properties are calculated on-demand"""
 
-    def __init__(self, name, file_name=None, plugin=None):
-        self.name = name
-        self.channel_name = self.name.split("-")[-1]
-        if file_name:
-            self.file_name = file_name
-            self.load_tiff(file_name)
-        self.image_labels = None
-        self.image_regionprops = None
-        self.centroids = None
-        self.pixel_list = None
-        self.pixel_list_flat = None
-        self.pixel_list_index = None
-        self.colocalisation_types = None
+    def __init__(
+        self,
+        image: np.ndarray,
+        case_number: str,
+        stack_number: str,
+        channel_name: str,
+        config: dict,
+    ):
+        self.image = image
+        self.case_number = case_number
+        self.stack_number = stack_number
+        self.channel_name = channel_name
+        self.config = config
+        self._labelled_image = None
+        self._objects = None
+        self._labels = None
+        self._centroids = None
 
-    def load_tiff(self, file_name, plugin="pil"):
-        self.file_name = file_name
-        self.image = np.array(io.imread(file_name, plugin=plugin))
+    @classmethod
+    def from_tiff(cls, file_path, config):
+        # will need to try to load from pickle cache first
+        image = np.array(io.imread(file_path, plugin="pil"))
+        file_name = cls._split_file_path(file_path)
+        case_number, stack_number, channel_name = cls._split_file_name(file_name)
+        return cls(image, case_number, stack_number, channel_name, config)
 
-    def get_lables(self, opt=1):
-        self.image_labels = measure.label(self.image, connectivity=opt)
+    @classmethod
+    def _split_file_path(cls, file_path):
+        file_name = file_path.rsplit("/", 1)[-1].split(".")[0]
 
-    def get_regionprops(self):
-        try:
-            self.image_regionprops = measure.regionprops(self.image_labels)
-        except AttributeError:
-            self.get_labels()
-            self.get_regionprops()
+        return file_name
 
-    def get_centroids(self):
-        try:
-            self.centroids = np.array([x.centroid for x in self.image_regionprops])
-        except AttributeError:
-            self.get_regionprops()
-            self.get_centroids()
+    @classmethod
+    def _split_file_name(cls, file_name):
+        case_number, stack_number, channel_name = file_name.split("-")
 
-    def get_pixel_list(self):
-        try:
-            self.pixel_list = np.array([np.array(x.coords) for x in self.image_regionprops])
-        except AttributeError:
-            self.get_regionprops()
-            self.get_pixel_list()
+        return case_number, stack_number, channel_name
 
+    @property
+    def labelled_image(self):
+        if not self._labelled_image:
+            self._labelled_image = measure.label(
+                self.image, connectivity=self.config.get("connectivity", 1)
+            )
+        return self._labelled_image
+
+    @property
+    def labels(self):
+        if not self._labels:
+            self._labels = [ob.label for ob in self.objects]
+        return self._labels
+
+    @property
+    def objects(self):
+        if not self._objects:
+            self._objects = measure.regionprops(self.labelled_image, cache=False)
+        return self._objects
+
+    @property
+    def centroids(self):
+        if not self._centroids:
+            self._centroids = [ob.centroid for ob in self.objects]
+        return self._centroids
+
+    def colocalise_with(self, other_channel, method):
+        colocalised_image, object_list = colocalisation.colocalise(self, other_channel, method)
+
+        colocalisation_channel_file = ColocalisedChannelFile(
+            image=colocalised_image,
+            case_number=self.case_number,
+            stack_number=self.stack_number,
+            channel_name=self.channel_name,
+            config=self.config,
+            colocalised_with=other_channel.channel_name,
+        )
+
+        return colocalisation_channel_file
+
+    # we need to save the file with a unique name for each image/config combination. to be done with checksum
     def save_to_pickle(self, file_name):
         with open(file_name, "wb") as output_pickle:
             pickle.dump(self, output_pickle)
 
-    def load_from_pickle(self, file_name):
+    @classmethod
+    def load_from_pickle(cls, file_name):
         with open(file_name, "rb") as input_pickle:
             self = pickle.load(input_pickle)
         return self
@@ -65,9 +103,19 @@ class ChannelFile:
     def set_colocalisation_types(self, colocalisation_types):
         self.colocalisation_types = colocalisation_types
 
-    def _get_flat_array(self, array):
-        print("Flattening array. Not the quickest..")
-        flat_array = np.array([])
-        for i in range(len(array)):
-            flat_array = np.concatenate((flat_array, array[i].flatten()))
-        return flat_array
+
+class ColocalisedChannelFile(ChannelFile):
+    def __init__(
+        self,
+        image: np.ndarray,
+        case_number: str,
+        stack_number: str,
+        channel_name: str,
+        config: dict,
+        colocalised_with: str,
+    ):
+        super().__init__(image, case_number, stack_number, channel_name)
+        self.colocalised_with = colocalised_with
+        self.overlap_list = None
+        self.distance_list = None
+        self.colocalisation_method = None
