@@ -5,3 +5,5 @@ test_data/
 .DS_Store
 .file_cache/
 .pytest_cache/
+*.ipynb*
+*.
