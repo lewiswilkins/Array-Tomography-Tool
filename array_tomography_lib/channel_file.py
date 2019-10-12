@@ -4,14 +4,14 @@ import sys
 import numpy as np
 from skimage import io, measure
 
-from array_tomography_lib import colocalisation
+# from array_tomography_lib import colocalisation
 
 
 class ChannelFile:
     """Contains one channel's image stack and associated properties.
     Image properties are calculated on-demand"""
 
-    def __init__(self, image: np.ndarray, case_number: str, stack_number: str, channel_name: str, config: dict):
+    def __init__(self, image: np.ndarray, case_number: str, stack_number: str, channel_name: str):
         self.image = image
         self.case_number = case_number
         self.stack_number = stack_number
@@ -24,14 +24,14 @@ class ChannelFile:
 
 
     @classmethod
-    def from_tiff(cls, file_path, config):
+    def from_tiff(cls, file_path):
         # will need to try to load from pickle cache first
         image = np.array(io.imread(file_path, plugin="pil"))
         file_name = cls._split_file_path(file_path)
         case_number, stack_number, channel_name = cls._split_file_name(file_name)
-        return cls(image, case_number, stack_number, channel_name, config)
+        return cls(image, case_number, stack_number, channel_name)
 
-
+  
     @classmethod
     def _split_file_path(cls, file_path):
         file_name = file_path.rsplit("/",1)[-1].split(".")[0]
@@ -39,7 +39,7 @@ class ChannelFile:
         return file_name
 
     @classmethod
-    def _split_file_name(cls, file_name)
+    def _split_file_name(cls, file_name):
         case_number, stack_number, channel_name = file_name.split("-")
 
         return case_number, stack_number, channel_name
@@ -47,7 +47,7 @@ class ChannelFile:
     @property
     def labels(self):
         if not self._image_labels:
-            self._image_labels = measure.label(self.image, connectivity=self.config.get("connectivity", 1))
+            self._image_labels = measure.label(self.image, connectivity=1)
         return self._image_labels
 
     @property
@@ -62,10 +62,10 @@ class ChannelFile:
         yield from (ob.centroid for ob in self.objects)
 
 
-    def colocalise_with(self, other_channel, method):
-        colocalisation_channel_file = colocalisation.colocalise(self, other_channel, method)
+    # def colocalise_with(self, other_channel, method):
+    #     colocalisation_channel_file = colocalisation.colocalise(self, other_channel, method)
 
-        return colocalisation_channel_file
+    #     return colocalisation_channel_file
 
     # we need to save the file with a unique name for each image/config combination. to be done with checksum
     def save_to_pickle(self, file_name):
