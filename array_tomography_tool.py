@@ -49,23 +49,20 @@ def _parse_args():
 def _parse_config(config_path: str) -> dict:
     with open(config_path) as f:
         config_dict = yaml.load(f, Loader=yaml.Loader)
-<<<<<<< HEAD
-    return make_shallow_dict(config_dict)
-=======
-    return _make_shallow_dict(config_dict)
->>>>>>> ca958122c508de7b8464d0a48618f22eba882f25
+    return config_dict
+    # return _make_shallow_dict(config_dict)
 
 
 def process_stack(case_number: str, stack_number: str, config: dict, in_dir: str):
     print(f"Processing {case_number}-{stack_number}")
     channels = []
     for channel_filepath in get_channels(case_number, stack_number, in_dir):
-        channel_file = ChannelFile.from_tiff(channel_filepath, config)
+        channel_file = ChannelFile.from_tiff(channel_filepath)
         print(len(channel_file.labels))
         channels.append(channel_file)
 
-    method = config[channels[0][channels[1]]]
-    channels[0].colocalise_with(channels[1], method=method)
+    # method = config["channels"][channels[0].channel_name][channels[1].channel_name]
+    channels[0].colocalise_with(channels[1], config)
 
 
 def get_case_stack_numbers(dir_path):
