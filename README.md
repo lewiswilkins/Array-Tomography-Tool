@@ -37,8 +37,4 @@ useful if we are calling the objects at run time?)
 In each ChannelFile for each object, label which channels the object overlaps with and by how much.
 
 to produce a colocalised image, filter the list of objects by those which fit the conditions, then
-<<<<<<< HEAD
 filter the labelled image by the pixels whose values are in the set of filtered object IDs
-=======
-filter the labelled image by the pixels whose values are in the set of filtered object IDs
->>>>>>> ca958122c508de7b8464d0a48618f22eba882f25
