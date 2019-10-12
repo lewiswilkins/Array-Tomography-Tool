@@ -20,8 +20,8 @@ def main():
 
     config = _parse_config(config_path)
 
-    for case_stack in get_case_stack_numbers(in_dir):
-        process_stack(case_stack, config, in_dir)
+    for case_stack_number in get_case_stack_numbers(in_dir):
+        process_stack(case_stack_number, in_dir, config)
 
 
 def _parse_args():
@@ -51,9 +51,9 @@ def _parse_config(config_path):
     return _make_shallow_dict(config_dict)
 
 
-def process_stack(case_stack, config, in_dir):
+def process_stack(case_stack_number, in_dir, config):
     print(f"Processing {case_stack}")
-    channel_files = load_or_compute_channel_files(case_stack, in_dir)
+    channel_files = load_or_compute_channel_files(case_stack_number, in_dir)
     results = colocalisation.colocalise_pairwise(channel_files, config)
     # now print the
 
@@ -68,7 +68,7 @@ def get_case_stack_numbers(dir_path):
     return list(case_stack_numbers)
 
 
-def load_or_compute_channel_files(case_stack_number, in_dir):
+def load_or_compute_channel_files(path):
     for channel_name in CHANNEL_NAMES:
         try:
             yield load_channel_file(case_stack_number, channel_name)
@@ -77,28 +77,40 @@ def load_or_compute_channel_files(case_stack_number, in_dir):
             yield compute_channel_file(case_stack_number, channel_name, in_dir)
 
 
-def load_channel_file(case_stack_number, channel):
-    _mkdir_if_not_exists(CACHE_DIR)
-    channel_name = f"{case_stack_number}-{channel}"
-    temp_channel_file = channel_file.ChannelFile(name=channel_name)
-    loaded_channel_file = temp_channel_file.load_from_pickle(
-        file_name=os.path.join(CACHE_DIR, f"{channel_name}.pickle")
+def load_channel_file(case_stack_number, channel_name, dir):
+    file_name = f"{case_stack_number}-{channel}"
+    loaded_channel_file = channel_file.ChannelFile.load_from_pickle(
+        file_name=os.path.join(CACHE_DIR, f"{file_name}.pickle")
     )
     return loaded_channel_file
 
 
-def compute_channel_file(case_stack_number, channel_name, in_dir):
-    print(f"Preprocessing {case_stack_number}.")
-    filename = os.path.join(in_dir, f"{case_stack_number}-{channel_name}.tif")
-    channel = channel_file.ChannelFile(name=channel_name, file_name=filename)
-    channel.get_lables()
-    channel.get_regionprops()
-    channel.get_centroids()
-    channel.get_pixel_list()
+def compute_channel_file(path):
+    _mkdir_if_not_exists(CACHE_DIR)
+    channel = channel_file.ChannelFile.from_tiff(path)
+    case_number = channel.case_number
+    stack_number = channel.stack_number
+    channel_name = channel.channel_name
     channel.save_to_pickle(
-        file_name=os.path.join(CACHE_DIR, f"{case_stack_number}-{channel_name}.pickle")
+        file_name=os.path.join(CACHE_DIR, 
+            f"{case_number}-{stack_number}-{channel_name}.pickle"
+        )
     )
     return channel
+
+
+# def compute_channel_file(case_stack_number, channel_name, in_dir):
+#     print(f"Preprocessing {case_stack_number}.")
+#     filename = os.path.join(in_dir, f"{case_stack_number}-{channel_name}.tif")
+#     channel = channel_file.ChannelFile(name=channel_name, file_name=filename)
+#     channel.get_lables()
+#     channel.get_regionprops()
+#     channel.get_centroids()
+#     channel.get_pixel_list()
+#     channel.save_to_pickle(
+#         file_name=os.path.join(CACHE_DIR, f"{case_stack_number}-{channel_name}.pickle")
+#     )
+#     return channel
 
 
 def _make_shallow_dict(config_dict):

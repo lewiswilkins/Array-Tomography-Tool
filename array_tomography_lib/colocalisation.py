@@ -11,7 +11,7 @@ from PIL import Image
 from skimage import measure
 
 from array_tomography_lib import colocalisation_result
-from array_tomography_lib import ChannelFile, ColocalisedChannelFile
+from array_tomography_lib.channel_file import ChannelFile, ColocalisedChannelFile
 
 
 def colocalise_pairwise(channels: List[ChannelFile], config):
@@ -65,9 +65,8 @@ def _compute_distance(
     channel_2_centroids = channel_2.centroids
     min_distances = []
     for channel_1_centroid in channel_1_centroids:
-        channel_2_cropped_centroids = _get_cropped_centroids(channel_2, channel_1_centroid, 10)
         distances = _calculate_distances(
-            channel_1_centroid, channel_2_cropped_centroids, xy_resolution, z_resolution
+            channel_1_centroid, channel_2_centroids, xy_resolution, z_resolution
         )
         min_distance = min(distances)
         if min_distance < min_distance:
@@ -78,25 +77,25 @@ def _compute_distance(
     print(f"Found {len(min_distances)} objects within {max_distance}")
 
 
-def _get_cropped_centroids(channel, centroid, offset=10):
-    cropped_image = _get_cropped_image(channel.image, centroid, offset)
-    labels = measure.label(cropped_image)
-    regionprops = measure.regionprops(labels)
-    return regionprops.centroid
+# def _get_cropped_centroids(channel, centroid, offset=10):
+#     cropped_image = _get_cropped_image(channel.image, centroid, offset)
+#     labels = measure.label(cropped_image)
+#     regionprops = measure.regionprops(labels)
+#     return regionprops.centroid
 
 
-def _get_cropped_image(image, centroid, offset=10):
-    rounded_centroid = np.around(centroid)
-    y = rounded_centroid[1]
-    x = rounded_centroid[2]
-    y_max = image.shape[1]
-    x_max = image.shape[2]
-    x_up = _is_in_range(0, x_max, x + offset)
-    x_down = _is_in_range(0, x_max, x - offset)
-    y_up = _is_in_range(0, y_max, y + offset)
-    y_down = _is_in_range(0, y_max, y - offset)
+# def _get_cropped_image(image, centroid, offset=10):
+#     rounded_centroid = np.around(centroid)
+#     y = rounded_centroid[1]
+#     x = rounded_centroid[2]
+#     y_max = image.shape[1]
+#     x_max = image.shape[2]
+#     x_up = _is_in_range(0, x_max, x + offset)
+#     x_down = _is_in_range(0, x_max, x - offset)
+#     y_up = _is_in_range(0, y_max, y + offset)
+#     y_down = _is_in_range(0, y_max, y - offset)
 
-    return image[:, y_down:y_up, x_down:x_up]
+#     return image[:, y_down:y_up, x_down:x_up]
 
 
 def _is_in_range(lower, upper, value):

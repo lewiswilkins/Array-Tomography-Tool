@@ -1,1 +1,1 @@
-from channel_file import *
+from array_tomography_lib.channel_file import *
