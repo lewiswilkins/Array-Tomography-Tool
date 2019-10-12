@@ -17,25 +17,23 @@ class ChannelFile:
         case_number: str,
         stack_number: str,
         channel_name: str,
-        config: dict,
     ):
         self.image = image
         self.case_number = case_number
         self.stack_number = stack_number
         self.channel_name = channel_name
-        self.config = config
         self._labelled_image = None
         self._objects = None
         self._labels = None
         self._centroids = None
 
     @classmethod
-    def from_tiff(cls, file_path, config):
+    def from_tiff(cls, file_path):
         # will need to try to load from pickle cache first
         image = np.array(io.imread(file_path, plugin="pil"))
         file_name = cls._split_file_path(file_path)
         case_number, stack_number, channel_name = cls._split_file_name(file_name)
-        return cls(image, case_number, stack_number, channel_name, config)
+        return cls(image, case_number, stack_number, channel_name)
 
     @classmethod
     def _split_file_path(cls, file_path):
@@ -53,7 +51,7 @@ class ChannelFile:
     def labelled_image(self):
         if not self._labelled_image:
             self._labelled_image = measure.label(
-                self.image, connectivity=self.config.get("connectivity", 1)
+                self.image, connectivity=1
             )
         return self._labelled_image
 
@@ -72,18 +70,17 @@ class ChannelFile:
     @property
     def centroids(self):
         if not self._centroids:
-            self._centroids = [ob.centroid for ob in self.objects]
+            self._centroids = np.array([ob.centroid for ob in self.objects])
         return self._centroids
 
-    def colocalise_with(self, other_channel, method):
-        colocalised_image, object_list = colocalisation.colocalise(self, other_channel, method)
+    def colocalise_with(self, other_channel, config):
+        colocalised_image, object_list = colocalisation.colocalise(self, other_channel, config)
 
         colocalisation_channel_file = ColocalisedChannelFile(
             image=colocalised_image,
             case_number=self.case_number,
             stack_number=self.stack_number,
             channel_name=self.channel_name,
-            config=self.config,
             colocalised_with=other_channel.channel_name,
         )
 
@@ -111,7 +108,6 @@ class ColocalisedChannelFile(ChannelFile):
         case_number: str,
         stack_number: str,
         channel_name: str,
-        config: dict,
         colocalised_with: str,
     ):
         super().__init__(image, case_number, stack_number, channel_name)
