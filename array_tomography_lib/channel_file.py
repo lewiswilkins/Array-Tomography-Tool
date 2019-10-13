@@ -26,6 +26,7 @@ class ChannelFile:
         self._objects = None
         self._labels = None
         self._centroids = None
+        self._object_coords = None
 
     @classmethod
     def from_tiff(cls, file_path):
@@ -49,10 +50,11 @@ class ChannelFile:
 
     @property
     def labelled_image(self):
-        if not self._labelled_image:
-            self._labelled_image = measure.label(
+        if self._labelled_image is None:
+            self._labelled_image = np.array(measure.label(
                 self.image, connectivity=1
-            )
+            ))
+            
         return self._labelled_image
 
     @property
@@ -67,11 +69,20 @@ class ChannelFile:
             self._objects = measure.regionprops(self.labelled_image, cache=False)
         return self._objects
 
+
     @property
     def centroids(self):
         if not self._centroids:
             self._centroids = np.array([ob.centroid for ob in self.objects])
         return self._centroids
+
+
+    @property
+    def object_coords(self):
+        if self._object_coords is None:
+            self._object_coords = np.array([ob.coords for ob in self.objects])
+        return self._object_coords
+
 
     def colocalise_with(self, other_channel, config):
         colocalised_image, object_list = colocalisation.colocalise(self, other_channel, config)
