@@ -71,91 +71,44 @@ def _compute_distance(
     channel_1_centroids = channel_1.centroids
     channel_2_centroids = channel_2.centroids
     min_distances = []
-    start = time.time()
-    for channel_1_centroid in channel_1_centroids:
-        distances = _get_best_distance(
+
+    for region,channel_1_centroid in zip(channel_1.objects, channel_1_centroids):
+        distances = _calculate_distances(
             channel_1_centroid, channel_2_centroids, xy_resolution, z_resolution
         )
         min_distance = min(distances)
         if min_distance < max_distance:
-            min_distances.append(min_distances)
-    end = time.time()
-
+            min_distances.append((region.label, min_distances))
     
-    print(f"time elapsed: {end-start}s")
+    colocalised_image = _get_colocalised_image(
+        channel_1.image, [x[0] for x in min_distances], channel_1.object_coords
+        )
+
     print(f"{channel_1.channel_name} and {channel_2.channel_name}: ")
     print(f"{len(channel_1_centroids)} objects in channel 1")
     print(f"Found {len(min_distances)} objects within {max_distance}")
 
+    return colocalised_image, min_distances
 
-def _get_cropped_centroids(channel, centroid, offset=10):
-    cropped_image = _get_cropped_image(channel.image, centroid, offset)
-    labels = measure.label(cropped_image)
-    regionprops = measure.regionprops(labels)
-    return regionprops.centroid
-
-
-def _get_cropped_image(image, centroid, offset=10):
-    rounded_centroid = np.around(centroid)
-    y = rounded_centroid[1]
-    x = rounded_centroid[2]
-    y_max = image.shape[1]
-    x_max = image.shape[2]
-    x_up = _is_in_range(0, x_max, x + offset)
-    x_down = _is_in_range(0, x_max, x - offset)
-    y_up = _is_in_range(0, y_max, y + offset)
-    y_down = _is_in_range(0, y_max, y - offset)
-
-    return image[:, y_down:y_up, x_down:x_up]
-
-
-def _is_in_range(lower, upper, value):
-    if value < lower:
-        return lower
-    elif value > upper:
-        return upper
-    else:
-        return value
-
-
-def _calculate_distances(channel_1_centroid, channel_2_centroid_list, xy_resolution, z_resolution):
-    difference = np.array(channel_2_centroid_list) - np.array(channel_1_centroid)
-    difference_resolved = difference * np.array([xy_resolution, xy_resolution, z_resolution])
-    distances = []
-    for centroid in difference_resolved:
-        distances.append((difference_resolved ** 2).sum())
-
-    return distances
-
-
-@njit(cache=True, fastmath=True)
-def _calculate_distances_jit(channel_1_centroid, channel_2_centroids,
-        xy_resolution=0.102, z_resolution=0.07):
-    """Computes the distances between object from channel_1 and all objects in channel_2.
-       Returns a numpy array of the distances."""
-    difference = channel_2_centroids - channel_1_centroid
-    difference_resolved = difference * np.array([xy_resolution, xy_resolution, z_resolution])
-    distances = []
-    for i in range(len(difference_resolved)):
-        distances.append((difference_resolved**2).sum())
-
-    return np.array(distances)
 
 @njit(cache=True, fastmath=True, nogil=True)
-def _get_best_distance(
+def _calculate_distances(
         centroids, centroids_list, xy_resolution=0.102, z_resolution=0.07
     ):
-        distances = []
-        # Loop over all centroids in channel j and returns the closest distance
-        for i in range(len(centroids_list)):
-            distance = sqrt(
-                pow((centroids[0] - centroids_list[i][0]) * xy_resolution, 2)
-                + pow((centroids[1] - centroids_list[i][1]) * xy_resolution, 2)
-                + pow((centroids[2] - centroids_list[i][2]) * z_resolution, 2)
-            )
-            distances.append(distance)
-       
-        return np.array(distances)
+    """Computes the distances between object from channel_1 and all objects in channel_2.
+       Returns a numpy array of the distances."""
+    distances = []
+    # Loop over all centroids in channel j and returns the closest distance
+    for i in range(len(centroids_list)):
+        distance = sqrt(
+            pow((centroids[0] - centroids_list[i][0]) * xy_resolution, 2)
+            + pow((centroids[1] - centroids_list[i][1]) * xy_resolution, 2)
+            + pow((centroids[2] - centroids_list[i][2]) * z_resolution, 2)
+        )
+        distances.append(distance)
+    
+    return np.array(distances)
+
 
 def _compute_overlap(channel_1, channel_2, min_overlap=0.25):
     """Compute an image mask for pixels that are present in both channels.
@@ -194,7 +147,7 @@ def _get_colocalised_image(original_image, label_list, object_coords):
     colocalised_image.fill(0)
 
     for label in label_list:
-        coords = object_coords[label]
+        coords = object_coords[label-1]
         for pixel in coords:
             colocalised_image[pixel[0]][pixel[1]][pixel[2]] = 1
     
