@@ -41,8 +41,12 @@ def colocalise(channel_1, channel_2, config):
        Returns:
             a pair of images which only contain the colocalised objects, and a map of
             object -> overlap fraction """
+    channel_1_name = channel_1.channel_name
+    channel_2_name = channel_2.channel_name
     method = config["channels"][channel_1.channel_name][channel_2.channel_name]
     print(f"Colocalising {channel_1.channel_name} with {channel_2.channel_name} based on {method}.")
+    print(f"{len(channel_1.objects)} objects in {channel_1_name}")
+    print(f"{len(channel_2.objects)} objects in {channel_2_name}")
     if method == "distance":
         xy_resolution = config["xy_resolution"]
         z_resolution = config["z_resolution"]
@@ -133,17 +137,18 @@ def _compute_overlap(channel_1, channel_2, min_overlap=0.25):
     colocalised_image = _get_colocalised_image(
         channel_1_image, [x[0] for x in overlaps], channel_1.object_coords
         )
-
     print(f"{channel_1.channel_name} and {channel_2.channel_name}: ")
     print(f"{len(channel_1.objects)} objects in channel 1")
     print(f"Found {len(overlaps)} overlapping objects")
-    print(f"mean overlap is {sum(overlaps[0])/len(overlaps)}")
-
+    if len(overlaps) > 0:
+        print(f"mean overlap is {sum([x[0] for x in overlaps])/len(overlaps)}")
+    else:
+        print("No overlaps found!")
     return colocalised_image, overlaps
 
 
 def _get_colocalised_image(original_image, label_list, object_coords):
-    colocalised_image = original_image
+    colocalised_image = np.copy(original_image)
     colocalised_image.fill(0)
 
     for label in label_list:
@@ -152,6 +157,7 @@ def _get_colocalised_image(original_image, label_list, object_coords):
             colocalised_image[pixel[0]][pixel[1]][pixel[2]] = 1
     
     return colocalised_image
+
 
 
     # One option is to loop over each pixel in the image, and set it to
