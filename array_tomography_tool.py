@@ -4,6 +4,7 @@ import argparse
 import glob
 import os
 import re
+import time
 
 import yaml
 
@@ -20,10 +21,12 @@ def main():
     config_path = args.config
 
     config = _parse_config(config_path)
-
+    start = time.time()
     for case_number, stack_number in get_case_stack_numbers(in_dir):
         process_stack(case_number, stack_number, config, in_dir)
+    end = time.time()
 
+    print(f"Took {end-start}s")
 
 def _parse_args():
     parser = argparse.ArgumentParser(
@@ -58,11 +61,20 @@ def process_stack(case_number: str, stack_number: str, config: dict, in_dir: str
     channels = []
     for channel_filepath in get_channels(case_number, stack_number, in_dir):
         channel_file = ChannelFile.from_tiff(channel_filepath)
-        print(len(channel_file.labels))
         channels.append(channel_file)
 
-    # method = config["channels"][channels[0].channel_name][channels[1].channel_name]
-    channels[0].colocalise_with(channels[1], config)
+    for channel in channels:
+        print(channel.channel_name)
+    colocalised_channels = []
+    for i  in range(len(channels)):
+        print(f"Colocalising {channels[i].channel_name} with all other channels.")
+        for j in range(len(channels)):
+            if channels[i].channel_name == channels[j].channel_name:
+                continue
+            temp_colocalised_channel = channels[i].colocalise_with(channels[j], config)
+            temp_colocalised_channel.save_to_tiff(
+                f"Results/{temp_colocalised_channel.case_number}-{temp_colocalised_channel.stack_number}-{temp_colocalised_channel.channel_name}-coloc-{temp_colocalised_channel.colocalised_with}.tif")
+            colocalised_channels.append(temp_colocalised_channel)
 
 
 def get_case_stack_numbers(dir_path):

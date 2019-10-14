@@ -59,20 +59,20 @@ class ChannelFile:
 
     @property
     def labels(self):
-        if not self._labels:
+        if self._labels is None:
             self._labels = [ob.label for ob in self.objects]
         return self._labels
 
     @property
     def objects(self):
-        if not self._objects:
+        if self._objects is None:
             self._objects = measure.regionprops(self.labelled_image, cache=False)
         return self._objects
 
 
     @property
     def centroids(self):
-        if not self._centroids:
+        if self._centroids is None:
             self._centroids = np.array([ob.centroid for ob in self.objects])
         return self._centroids
 
@@ -126,3 +126,6 @@ class ColocalisedChannelFile(ChannelFile):
         self.overlap_list = None
         self.distance_list = None
         self.colocalisation_method = None
+    
+    def save_to_tiff(self, output_file_name):
+        io.imsave(output_file_name, self.image, plugin="tifffile")
