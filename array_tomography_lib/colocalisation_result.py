@@ -44,10 +44,10 @@ class ColocalisationResult:
             colocalised_image.fill(0)
             for label in image_1.object_list:
                 if label in image_2.object_list:
-                    colocalised_image = _fill_image(colocalised_image, image_1_coords)
-                    colocalised_image = _fill_image(colocalised_image, image_2_coords)
+                    colocalised_image = self._fill_image(colocalised_image, image_1_coords)
+                    
 
-    def _fill_image(image, coords):
+    def _fill_image(self, image, coords):
         for coord in coords:
             image[coord[0]][coord[1]][coord[2]] = 1
         return image 
