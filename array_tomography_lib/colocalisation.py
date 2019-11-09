@@ -10,8 +10,6 @@ from numba import njit, prange
 from PIL import Image
 from skimage import measure
 
-from array_tomography_lib import colocalisation_result
-
 
 def colocalise_pairwise(channels, config):
     """Computes the colocalisation for each pair of channels, according to the method.

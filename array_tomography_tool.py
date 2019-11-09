@@ -8,7 +8,7 @@ import time
 
 import yaml
 
-from array_tomography_lib import ChannelFile, colocalisation
+from array_tomography_lib import ChannelFile, colocalisation, ColocalisationResult
 
 CHANNEL_NAMES = ["PSD", "ALZ50", "SY38"]
 CACHE_DIR = ".file_cache"
@@ -23,7 +23,7 @@ def main():
     config = _parse_config(config_path)
     start = time.time()
     for case_number, stack_number in get_case_stack_numbers(in_dir):
-        process_stack(case_number, stack_number, config, in_dir)
+        process_stack(case_number, stack_number, config, in_dir, out_dir)
     end = time.time()
 
     print(f"Took {end-start}s")
@@ -56,7 +56,13 @@ def _parse_config(config_path: str) -> dict:
     # return _make_shallow_dict(config_dict)
 
 
-def process_stack(case_number: str, stack_number: str, config: dict, in_dir: str):
+def process_stack(
+    case_number: str,
+    stack_number: str,
+    config: dict, 
+    in_dir: str,
+    out_dir: str
+):
     print(f"Processing {case_number}-{stack_number}")
     channels = []
     for channel_filepath in get_channels(case_number, stack_number, in_dir):
@@ -65,17 +71,21 @@ def process_stack(case_number: str, stack_number: str, config: dict, in_dir: str
 
     for channel in channels:
         print(channel.channel_name)
-    colocalised_channels = []
-    for i  in range(len(channels)):
-        print(f"Colocalising {channels[i].channel_name} with all other channels.")
-        for j in range(len(channels)):
-            if channels[i].channel_name == channels[j].channel_name:
+    colocalised_results = []
+    for channel_1  in channels:
+        print(f"Colocalising {channel_1.channel_name} with all other channels.")
+        temp_colocalised_result = ColocalisationResult.from_channel_file(channel_1)
+        for channel_2 in channels:
+            if channel_1.channel_name == channel_2.channel_name:
                 continue
-            temp_colocalised_channel = channels[i].colocalise_with(channels[j], config)
-            temp_colocalised_channel.save_to_tiff(
-                f"Results/{temp_colocalised_channel.case_number}-{temp_colocalised_channel.stack_number}-{temp_colocalised_channel.channel_name}-coloc-{temp_colocalised_channel.colocalised_with}.tif")
-            colocalised_channels.append(temp_colocalised_channel)
+            temp_colocalised_channel = channel_1.colocalise_with(channel_2, config)
+            temp_colocalised_result.add_colocalised_image(temp_colocalised_channel)
+        colocalised_results.append(temp_colocalised_result)
+    
 
+def output_results_csv(colocalised_results, out_dir, out_file_name):
+    pass
+    
 
 def get_case_stack_numbers(dir_path):
     case_stack_numbers = set()

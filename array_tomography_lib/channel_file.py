@@ -1,5 +1,7 @@
 import pickle
 import sys
+from typing import List
+import os
 
 import numpy as np
 from skimage import io, measure
@@ -93,6 +95,7 @@ class ChannelFile:
             stack_number=self.stack_number,
             channel_name=self.channel_name,
             colocalised_with=other_channel.channel_name,
+            object_list=object_list,
         )
 
         return colocalisation_channel_file
@@ -120,12 +123,18 @@ class ColocalisedChannelFile(ChannelFile):
         stack_number: str,
         channel_name: str,
         colocalised_with: str,
+        object_list: List[float],
     ):
         super().__init__(image, case_number, stack_number, channel_name)
         self.colocalised_with = colocalised_with
-        self.overlap_list = None
-        self.distance_list = None
-        self.colocalisation_method = None
+        self.object_list = object_list
+        self.output_file_name = f"{self.case_number}-{self.stack_number}-{self.channel_name}-coloc-{self.colocalised_with}.tif"
+
     
-    def save_to_tiff(self, output_file_name):
-        io.imsave(output_file_name, self.image, plugin="tifffile")
+    def save_to_tiff(self, out_dir, out_file_name=None):
+        if out_file_name is None:
+            out_file_name = self.output_file_name
+        io.imsave(
+            os.path.join(out_dir, out_file_name),
+            self.image, plugin="tifffile"
+        )
