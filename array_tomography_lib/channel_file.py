@@ -124,13 +124,13 @@ class ColocalisedChannelFile(ChannelFile):
         stack_number: str,
         channel_name: str,
         colocalised_with: str,
-        object_list: List[float],
+        object_list: List[tuple],
     ):
         super().__init__(image, case_number, stack_number, channel_name)
         self.colocalised_with = colocalised_with
         self.object_list = object_list
         self.output_file_name = f"{self.case_number}-{self.stack_number}-{self.channel_name}-coloc-{self.colocalised_with}.tif"
-
+        
     
     def save_to_tiff(self, out_dir, out_file_name=None):
         if out_file_name is None:

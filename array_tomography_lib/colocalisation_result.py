@@ -29,9 +29,35 @@ class ColocalisationResult:
             channel_name=channel_file.channel_name
         )
 
-    def add_colocalised_image(self, colocalised_image):
+    def add_colocalised_image(self, colocalised_image: ColocalisedChannelFile):
         self.colocalised_images.append(colocalised_image)
+        print(f"There are {len(self.colocalised_images)} in the object.")
     
+    def _calculate_combinations(self):
+        for combination in product(self.colocalised_images):
+            image_1 = combination[0]
+            image_2 = combination[1]
+
+            image_1_coords = image_1.object_coords
+            image_2_coords = image_2.object_coords
+            colocalised_image = np.copy(image_1.image)
+            colocalised_image.fill(0)
+            for label in image_1.object_list:
+                if label in image_2.object_list:
+                    colocalised_image = _fill_image(colocalised_image, image_1_coords)
+                    colocalised_image = _fill_image(colocalised_image, image_2_coords)
+
+    def _fill_image(image, coords):
+        for coord in coords:
+            image[coord[0]][coord[1]][coord[2]] = 1
+        return image 
+        
+
+
+        #this should be a function which calculates the additional images where
+        #the original channel is colocalised with more than a single channel
+        
+        pass
 
 # class ColocalisationResult:
 #     """The colocalisations for one image stack. Contains a list of all colocalisation

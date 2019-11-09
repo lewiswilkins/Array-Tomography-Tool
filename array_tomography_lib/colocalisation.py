@@ -72,7 +72,7 @@ def _compute_distance(
     
     channel_1_centroids = channel_1.centroids
     channel_2_centroids = channel_2.centroids
-    min_distances = []
+    min_distances = {}
 
     for region,channel_1_centroid in zip(channel_1.objects, channel_1_centroids):
         distances = _calculate_distances(
@@ -80,10 +80,10 @@ def _compute_distance(
         )
         min_distance = min(distances)
         if min_distance < max_distance:
-            min_distances.append((region.label, min_distances))
+            min_distances[region.label] = min_distances
     
     colocalised_image = _get_colocalised_image(
-        channel_1.image, [x[0] for x in min_distances], channel_1.object_coords
+        channel_1.image, min_distances, channel_1.object_coords
         )
 
     print(f"{channel_1.channel_name} and {channel_2.channel_name}: ")
@@ -125,21 +125,21 @@ def _compute_overlap(channel_1, channel_2, min_overlap=0.25):
     overlapping_pixels = _get_overlap_mask(channel_1_image, channel_2_image)
     overlapping_parts_ch1 = np.ma.masked_array(channel_1_image, mask=~overlapping_pixels)
     overlapping_regions = measure.regionprops(overlapping_parts_ch1)
-    overlaps = []
+    overlaps = {}
     for region, overlap in zip(channel_1.objects, overlapping_regions):
         overlap_fraction = overlap.area / region.area
         if overlap_fraction >= min_overlap:
-            overlaps.append((region.label, overlap_fraction))
+            overlaps[region.label] = overlap_fraction
 
     # add function here to get image with original objects but only if they overlap
     colocalised_image = _get_colocalised_image(
-        channel_1_image, [x[0] for x in overlaps], channel_1.object_coords
+        channel_1_image, overlaps, channel_1.object_coords
         )
     print(f"{channel_1.channel_name} and {channel_2.channel_name}: ")
     print(f"{len(channel_1.objects)} objects in channel 1")
     print(f"Found {len(overlaps)} overlapping objects")
     if len(overlaps) > 0:
-        print(f"mean overlap is {sum([x[0] for x in overlaps])/len(overlaps)}")
+        print(f"mean overlap is {sum(overlaps)/len(overlaps)}")
     else:
         print("No overlaps found!")
     return colocalised_image, overlaps

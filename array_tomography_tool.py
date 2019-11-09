@@ -85,7 +85,11 @@ def process_stack(
 
 def output_results_csv(colocalised_results, out_dir, out_file_name):
     pass
-    
+
+
+def get_combinations():
+    pass
+
 
 def get_case_stack_numbers(dir_path):
     case_stack_numbers = set()
