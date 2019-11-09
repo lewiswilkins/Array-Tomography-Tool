@@ -2,6 +2,7 @@ import pickle
 import sys
 from typing import List
 import os
+import functools
 
 import numpy as np
 from skimage import io, measure
@@ -51,38 +52,38 @@ class ChannelFile:
         return case_number, stack_number, channel_name
 
     @property
+    @functools.lru_cache()
     def labelled_image(self):
-        if self._labelled_image is None:
-            self._labelled_image = np.array(measure.label(
-                self.image, connectivity=1
-            ))
+        self._labelled_image = np.array(measure.label(
+            self.image, connectivity=1
+        ))
             
         return self._labelled_image
 
     @property
+    @functools.lru_cache()
     def labels(self):
-        if self._labels is None:
-            self._labels = [ob.label for ob in self.objects]
+        self._labels = [ob.label for ob in self.objects]
         return self._labels
 
     @property
+    @functools.lru_cache()
     def objects(self):
-        if self._objects is None:
-            self._objects = measure.regionprops(self.labelled_image, cache=False)
+        self._objects = measure.regionprops(self.labelled_image, cache=False)
         return self._objects
 
 
     @property
+    @functools.lru_cache()
     def centroids(self):
-        if self._centroids is None:
-            self._centroids = np.array([ob.centroid for ob in self.objects])
+        self._centroids = np.array([ob.centroid for ob in self.objects])
         return self._centroids
 
 
     @property
+    @functools.lru_cache()
     def object_coords(self):
-        if self._object_coords is None:
-            self._object_coords = np.array([ob.coords for ob in self.objects])
+        self._object_coords = np.array([ob.coords for ob in self.objects])
         return self._object_coords
 
 
