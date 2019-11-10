@@ -5,6 +5,7 @@ import glob
 import os
 import re
 import time
+import itertools
 
 import yaml
 
@@ -81,14 +82,13 @@ def process_stack(
             temp_colocalised_channel = channel_1.colocalise_with(channel_2, config)
             temp_colocalised_result.add_colocalised_image(temp_colocalised_channel)
         colocalised_results.append(temp_colocalised_result)
-    
+    output_results_csv(colocalised_results, out_dir, "test.csv")
 
 def output_results_csv(colocalised_results, out_dir, out_file_name):
-    pass
+    with open(os.path.join(out_dir, out_file_name), "w") as output_file:
+        
+                    
 
-
-def get_combinations():
-    pass
 
 
 def get_case_stack_numbers(dir_path):

@@ -80,7 +80,7 @@ def _compute_distance(
         )
         min_distance = min(distances)
         if min_distance < max_distance:
-            min_distances[region.label] = min_distances
+            min_distances[region.label] = {f"{channel_2.channel_name}_distance" : min_distances}
     
     colocalised_image = _get_colocalised_image(
         channel_1.image, min_distances, channel_1.object_coords
@@ -129,7 +129,7 @@ def _compute_overlap(channel_1, channel_2, min_overlap=0.25):
     for region, overlap in zip(channel_1.objects, overlapping_regions):
         overlap_fraction = overlap.area / region.area
         if overlap_fraction >= min_overlap:
-            overlaps[region.label] = overlap_fraction
+            overlaps[region.label] = {f"{channel_2.channel_name}_overlap" : overlap_fraction}
 
     # add function here to get image with original objects but only if they overlap
     colocalised_image = _get_colocalised_image(
