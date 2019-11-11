@@ -6,6 +6,7 @@ import os
 import re
 import time
 import itertools
+from pandas import DataFrame
 
 import yaml
 
@@ -81,16 +82,43 @@ def process_stack(
                 continue
             temp_colocalised_channel = channel_1.colocalise_with(channel_2, config)
             temp_colocalised_result.add_colocalised_image(temp_colocalised_channel)
+        temp_colocalised_result.calculate_combination_images()
         colocalised_results.append(temp_colocalised_result)
-    output_results_csv(colocalised_results, out_dir, "test.csv")
+    output_results_csv(colocalised_results, out_dir, config["csv_name"])
 
 def output_results_csv(colocalised_results, out_dir, out_file_name):
-    with open(os.path.join(out_dir, out_file_name), "w") as output_file:
-        
+    titles_dict = {"case" : [], "stack" : [], "channel" : [], "objects" : []}
+    combination_dict = {}
+    for key in get_combination_names(colocalised_results):
+        combination_dict[key] = []
+    for result in colocalised_results:
+        titles_dict["case"].append(result.case_number)
+        titles_dict["stack"].append(result.stack_number)
+        titles_dict["channel"].append(result.channel_name)
+        titles_dict["objects"].append(len(result.original_objects))
+        combination_object_count = {
+            x.colocalised_with : len(x.object_list) for x in result.colocalised_images
+            }
+        for key in combination_dict:
+            if key in combination_object_count:
+                combination_dict[key].append(combination_object_count[key])
+            else:
+                combination_dict[key].append(0)
+    csv_dict = {**titles_dict, **combination_dict}
+    csv_dataframe = DataFrame(csv_dict, columns=csv_dict.keys())
+    csv_dataframe.to_csv(
+        os.path.join(out_dir, out_file_name),
+        index=None,
+        )
+
+def get_combination_names(colocalised_results):
+    combination_names = set()
+    for result in colocalised_results:
+        combination_names.add(result.channel_name)
+        for image in result.colocalised_images:
+            combination_names.add(image.colocalised_with)
+    return combination_names
                     
-
-
-
 def get_case_stack_numbers(dir_path):
     case_stack_numbers = set()
     r = re.compile(r"^.*\/(\d+)-(stack\d+)-.*.tif")
