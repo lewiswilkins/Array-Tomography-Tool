@@ -57,6 +57,7 @@ class ChannelFile:
         self._labelled_image = np.array(measure.label(
             self.image, connectivity=1
         ))
+
             
         return self._labelled_image
 
@@ -84,6 +85,7 @@ class ChannelFile:
     @functools.lru_cache()
     def object_coords(self):
         self._object_coords = np.array([ob.coords for ob in self.objects])
+
         return self._object_coords
 
 
@@ -141,3 +143,4 @@ class ColocalisedChannelFile(ChannelFile):
             plugin="tifffile",
             check_contrast=False
         )
+

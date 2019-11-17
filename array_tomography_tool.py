@@ -12,6 +12,7 @@ import yaml
 
 from array_tomography_lib import ChannelFile, colocalisation, ColocalisationResult
 
+
 CHANNEL_NAMES = ["PSD", "ALZ50", "SY38"]
 CACHE_DIR = ".file_cache"
 
@@ -26,6 +27,7 @@ def main():
     start = time.time()
     for case_number, stack_number in get_case_stack_numbers(in_dir):
         process_stack(case_number, stack_number, config, in_dir, out_dir)
+
     end = time.time()
 
     print(f"Took {end-start}s")

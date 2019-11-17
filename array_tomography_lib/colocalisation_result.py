@@ -6,6 +6,7 @@ import numpy as np
 from array_tomography_lib import ColocalisedChannelFile, colocalisation
 
 
+
 class ColocalisationResult:
     """The colocalisations for one image stack. Contains a list of all colocalisation
      possibilities for every subset of channels"""

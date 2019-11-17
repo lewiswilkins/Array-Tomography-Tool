@@ -7,3 +7,5 @@ test_data/
 .pytest_cache/
 *.ipynb*
 *.tif
+*.
+

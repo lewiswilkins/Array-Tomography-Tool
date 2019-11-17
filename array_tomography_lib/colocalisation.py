@@ -74,6 +74,7 @@ def _compute_distance(
     channel_2_centroids = channel_2.centroids
     min_distances = {}
 
+
     for region,channel_1_centroid in zip(channel_1.objects, channel_1_centroids):
         distances = _calculate_distances(
             channel_1_centroid, channel_2_centroids, xy_resolution, z_resolution
@@ -155,6 +156,6 @@ def get_colocalised_image(original_image, label_list, object_coords):
     
     return colocalised_image
     
-
 def _get_overlap_mask(image_1, image_2):
     return np.logical_and(image_1, image_2)
+
