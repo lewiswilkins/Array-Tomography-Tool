@@ -1,5 +1,8 @@
 import pickle
 import sys
+from typing import List
+import os
+import functools
 
 import numpy as np
 from skimage import io, measure
@@ -31,7 +34,7 @@ class ChannelFile:
     @classmethod
     def from_tiff(cls, file_path):
         # will need to try to load from pickle cache first
-        image = np.array(io.imread(file_path, plugin="pil"))
+        image = np.array(io.imread(file_path, plugin="tifffile"), dtype=np.int32)
         file_name = cls._split_file_path(file_path)
         case_number, stack_number, channel_name = cls._split_file_name(file_name)
         return cls(image, case_number, stack_number, channel_name)
@@ -49,38 +52,40 @@ class ChannelFile:
         return case_number, stack_number, channel_name
 
     @property
+    @functools.lru_cache()
     def labelled_image(self):
-        if self._labelled_image is None:
-            self._labelled_image = np.array(measure.label(
-                self.image, connectivity=1
-            ))
+        self._labelled_image = np.array(measure.label(
+            self.image, connectivity=1
+        ))
+
             
         return self._labelled_image
 
     @property
+    @functools.lru_cache()
     def labels(self):
-        if self._labels is None:
-            self._labels = [ob.label for ob in self.objects]
+        self._labels = [ob.label for ob in self.objects]
         return self._labels
 
     @property
+    @functools.lru_cache()
     def objects(self):
-        if self._objects is None:
-            self._objects = measure.regionprops(self.labelled_image, cache=False)
+        self._objects = measure.regionprops(self.labelled_image, cache=False)
         return self._objects
 
 
     @property
+    @functools.lru_cache()
     def centroids(self):
-        if self._centroids is None:
-            self._centroids = np.array([ob.centroid for ob in self.objects])
+        self._centroids = np.array([ob.centroid for ob in self.objects])
         return self._centroids
 
 
     @property
+    @functools.lru_cache()
     def object_coords(self):
-        if self._object_coords is None:
-            self._object_coords = np.array([ob.coords for ob in self.objects])
+        self._object_coords = np.array([ob.coords for ob in self.objects])
+
         return self._object_coords
 
 
@@ -93,6 +98,7 @@ class ChannelFile:
             stack_number=self.stack_number,
             channel_name=self.channel_name,
             colocalised_with=other_channel.channel_name,
+            object_list=object_list,
         )
 
         return colocalisation_channel_file
@@ -120,12 +126,21 @@ class ColocalisedChannelFile(ChannelFile):
         stack_number: str,
         channel_name: str,
         colocalised_with: str,
+        object_list: dict,
     ):
         super().__init__(image, case_number, stack_number, channel_name)
         self.colocalised_with = colocalised_with
-        self.overlap_list = None
-        self.distance_list = None
-        self.colocalisation_method = None
+        self.object_list = object_list
+        self.output_file_name = f"{self.case_number}-{self.stack_number}-{self.channel_name}-coloc-{self.colocalised_with}.tif"
+        self.image = np.array(self.image, dtype=np.int32)
     
-    def save_to_tiff(self, output_file_name):
-        io.imsave(output_file_name, self.image, plugin="tifffile")
+    def save_to_tiff(self, out_dir, out_file_name=None):
+        if out_file_name is None:
+            out_file_name = self.output_file_name
+        io.imsave(
+            os.path.join(out_dir, out_file_name),
+            self.image, 
+            plugin="tifffile",
+            check_contrast=False
+        )
+

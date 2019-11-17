@@ -5,10 +5,13 @@ import glob
 import os
 import re
 import time
+import itertools
+from pandas import DataFrame, read_csv
 
 import yaml
 
-from array_tomography_lib import ChannelFile, colocalisation
+from array_tomography_lib import ChannelFile, colocalisation, ColocalisationResult
+
 
 CHANNEL_NAMES = ["PSD", "ALZ50", "SY38"]
 CACHE_DIR = ".file_cache"
@@ -23,7 +26,8 @@ def main():
     config = _parse_config(config_path)
     start = time.time()
     for case_number, stack_number in get_case_stack_numbers(in_dir):
-        process_stack(case_number, stack_number, config, in_dir)
+        process_stack(case_number, stack_number, config, in_dir, out_dir)
+
     end = time.time()
 
     print(f"Took {end-start}s")
@@ -56,7 +60,13 @@ def _parse_config(config_path: str) -> dict:
     # return _make_shallow_dict(config_dict)
 
 
-def process_stack(case_number: str, stack_number: str, config: dict, in_dir: str):
+def process_stack(
+    case_number: str,
+    stack_number: str,
+    config: dict, 
+    in_dir: str,
+    out_dir: str
+):
     print(f"Processing {case_number}-{stack_number}")
     channels = []
     for channel_filepath in get_channels(case_number, stack_number, in_dir):
@@ -65,18 +75,68 @@ def process_stack(case_number: str, stack_number: str, config: dict, in_dir: str
 
     for channel in channels:
         print(channel.channel_name)
-    colocalised_channels = []
-    for i  in range(len(channels)):
-        print(f"Colocalising {channels[i].channel_name} with all other channels.")
-        for j in range(len(channels)):
-            if channels[i].channel_name == channels[j].channel_name:
+    colocalised_results = []
+    for channel_1  in channels:
+        print(f"Colocalising {channel_1.channel_name} with all other channels.")
+        temp_colocalised_result = ColocalisationResult.from_channel_file(channel_1)
+        for channel_2 in channels:
+            if channel_1.channel_name == channel_2.channel_name:
                 continue
-            temp_colocalised_channel = channels[i].colocalise_with(channels[j], config)
-            temp_colocalised_channel.save_to_tiff(
-                f"Results/{temp_colocalised_channel.case_number}-{temp_colocalised_channel.stack_number}-{temp_colocalised_channel.channel_name}-coloc-{temp_colocalised_channel.colocalised_with}.tif")
-            colocalised_channels.append(temp_colocalised_channel)
+            temp_colocalised_channel = channel_1.colocalise_with(channel_2, config)
+            temp_colocalised_result.add_colocalised_image(temp_colocalised_channel)
+        temp_colocalised_result.calculate_combination_images()
+        colocalised_results.append(temp_colocalised_result)
+    
+    output_results_csv(colocalised_results, out_dir, config["csv_name"])
+    for result in colocalised_results:
+        result.save_images(out_dir)
 
+def output_results_csv(colocalised_results, out_dir, out_file_name):
+    #This needs to be changed so it doesnt over-write each time a new case-stack
+    #is run over. Probably do a check if exists, if it does just read in the csv
+    #and append the new data
+    file_path = os.path.join(out_dir, out_file_name)
+    if os.path.isfile(file_path):
+        pd = read_csv(file_path)
+        csv_dict = pd.to_dict("list")
+    else:
+        csv_dict = create_csv_dict(colocalised_results)
+    print(csv_dict)
+    combinations_set = set([key for key in get_combination_names(colocalised_results)])
+    for result in colocalised_results:
+        csv_dict["case"].append(result.case_number)
+        csv_dict["stack"].append(result.stack_number)
+        csv_dict["channel"].append(result.channel_name)
+        csv_dict["objects"].append(len(result.original_coords))
+        combination_object_count = {
+            x.colocalised_with : len(x.object_list) for x in result.colocalised_images
+            }
+        for key in combinations_set:
+            if key in combination_object_count:
+                csv_dict[key].append(combination_object_count[key])
+            else:
+                csv_dict[key].append(0)
+    csv_dataframe = DataFrame(csv_dict, columns=csv_dict.keys())
+    csv_dataframe.to_csv(
+        file_path,
+        index=None,
+        )
 
+def create_csv_dict(colocalised_results):
+    titles_dict = {"case" : [], "stack" : [], "channel" : [], "objects" : []}
+    combination_dict = {}
+    for key in get_combination_names(colocalised_results):
+        combination_dict[key] = []
+    return {**titles_dict, **combination_dict}
+
+def get_combination_names(colocalised_results):
+    combination_names = set()
+    for result in colocalised_results:
+        combination_names.add(result.channel_name)
+        for image in result.colocalised_images:
+            combination_names.add(image.colocalised_with)
+    return combination_names
+                    
 def get_case_stack_numbers(dir_path):
     case_stack_numbers = set()
     r = re.compile(r"^.*\/(\d+)-(stack\d+)-.*.tif")
