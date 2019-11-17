@@ -22,7 +22,7 @@ An example of the config file can be found in this repo - `example_config.yaml`.
 To run the tool, you will use the following command:
 
 `docker run array_tomography_tool -it -v /path/to/files/:/mnt/files/ --input
-/mnt/files/inputs/ --output /mnt/files/output/ --config /mnt/file/config.yaml`
+/mnt/files/inputs/ --output /mnt/files/output/ --config /mnt/files/config.yaml`
 
 Here you will need to replace `/path/to/files/` with the path to wherever your
 input files are. The suggested setup is to have a folder with two folders in it.
