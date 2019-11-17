@@ -1,6 +1,6 @@
 # Array Tomography Tool
 
-# Running Array Tomography Tool
+## Running Array Tomography Tool
 
 The easiest method to running the tool is to use Docker. First you will require
 Docker installed on your computer - go to
@@ -31,7 +31,7 @@ over. Another called `output` which will store the output images and numbers.
 You should also put your config file in this directory.
 
 
-# Notes
+## Notes
 
 Design around the ChannelFile class, which contains derived properties about the channel,
 for example number of objects, object areas, colocalised objects etc.
