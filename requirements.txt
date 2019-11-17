@@ -3,3 +3,5 @@ numpy
 progressbar2
 pyyaml
 scikit-image
+pandas
+
