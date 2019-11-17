@@ -6,4 +6,4 @@ RUN pip install --trusted-host pypi.python.org -r requirements.txt
 WORKDIR /ArrayTomographyTool
 ADD . /ArrayTomographyTool
 
-CMD [ "python", "process_stacks.py" ]
+ENTRYPOINT [ "python", "array_tomography_tool.py" ]

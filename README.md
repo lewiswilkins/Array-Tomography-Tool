@@ -1,5 +1,35 @@
 # Array Tomography Tool
 
+# Running Array Tomography Tool
+
+The easiest method to running the tool is to use Docker. First you will require
+Docker installed on your computer - go to
+https://www.docker.com/products/docker-desktop to download and install.
+
+Then you need to get the Docker image for the tool. Go to your terminal then
+paste in the following command
+
+`docker pull lewiswilkins/array_tomography_tool:latest`
+
+This will probably take a couple of mins to download. Once complete, you are
+ready to run the tool. For now it only does the colocalisation. The tool takes 3
+arguments:
+- `--input` the directory with the input files 
+- `--output` the output directory
+- `--config` the `.yaml` config file containing the colocalisation parameters
+
+An example of the config file can be found in this repo - `example_config.yaml`.
+To run the tool, you will use the following command:
+
+`docker run array_tomography_tool -it -v /path/to/files/:/mnt/files/ --input
+/mnt/files/inputs/ --output /mnt/files/output/ --config /mnt/file/config.yaml`
+
+Here you will need to replace `/path/to/files/` with the path to wherever your
+input files are. The suggested setup is to have a folder with two folders in it.
+One called `inputs` which will contain all of the input images you wish to run
+over. Another called `output` which will store the output images and numbers.
+You should also put your config file in this directory.
+
 
 # Notes
 
