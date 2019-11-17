@@ -6,7 +6,7 @@ import os
 import re
 import time
 import itertools
-from pandas import DataFrame
+from pandas import DataFrame, read_csv
 
 import yaml
 
@@ -84,32 +84,48 @@ def process_stack(
             temp_colocalised_result.add_colocalised_image(temp_colocalised_channel)
         temp_colocalised_result.calculate_combination_images()
         colocalised_results.append(temp_colocalised_result)
+    
     output_results_csv(colocalised_results, out_dir, config["csv_name"])
+    for result in colocalised_results:
+        result.save_images(out_dir)
 
 def output_results_csv(colocalised_results, out_dir, out_file_name):
+    #This needs to be changed so it doesnt over-write each time a new case-stack
+    #is run over. Probably do a check if exists, if it does just read in the csv
+    #and append the new data
+    file_path = os.path.join(out_dir, out_file_name)
+    if os.path.isfile(file_path):
+        pd = read_csv(file_path)
+        csv_dict = pd.to_dict("list")
+    else:
+        csv_dict = create_csv_dict(colocalised_results)
+    print(csv_dict)
+    combinations_set = set([key for key in get_combination_names(colocalised_results)])
+    for result in colocalised_results:
+        csv_dict["case"].append(result.case_number)
+        csv_dict["stack"].append(result.stack_number)
+        csv_dict["channel"].append(result.channel_name)
+        csv_dict["objects"].append(len(result.original_coords))
+        combination_object_count = {
+            x.colocalised_with : len(x.object_list) for x in result.colocalised_images
+            }
+        for key in combinations_set:
+            if key in combination_object_count:
+                csv_dict[key].append(combination_object_count[key])
+            else:
+                csv_dict[key].append(0)
+    csv_dataframe = DataFrame(csv_dict, columns=csv_dict.keys())
+    csv_dataframe.to_csv(
+        file_path,
+        index=None,
+        )
+
+def create_csv_dict(colocalised_results):
     titles_dict = {"case" : [], "stack" : [], "channel" : [], "objects" : []}
     combination_dict = {}
     for key in get_combination_names(colocalised_results):
         combination_dict[key] = []
-    for result in colocalised_results:
-        titles_dict["case"].append(result.case_number)
-        titles_dict["stack"].append(result.stack_number)
-        titles_dict["channel"].append(result.channel_name)
-        titles_dict["objects"].append(len(result.original_objects))
-        combination_object_count = {
-            x.colocalised_with : len(x.object_list) for x in result.colocalised_images
-            }
-        for key in combination_dict:
-            if key in combination_object_count:
-                combination_dict[key].append(combination_object_count[key])
-            else:
-                combination_dict[key].append(0)
-    csv_dict = {**titles_dict, **combination_dict}
-    csv_dataframe = DataFrame(csv_dict, columns=csv_dict.keys())
-    csv_dataframe.to_csv(
-        os.path.join(out_dir, out_file_name),
-        index=None,
-        )
+    return {**titles_dict, **combination_dict}
 
 def get_combination_names(colocalised_results):
     combination_names = set()

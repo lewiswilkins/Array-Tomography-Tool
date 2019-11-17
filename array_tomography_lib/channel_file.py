@@ -34,7 +34,7 @@ class ChannelFile:
     @classmethod
     def from_tiff(cls, file_path):
         # will need to try to load from pickle cache first
-        image = np.array(io.imread(file_path, plugin="pil"))
+        image = np.array(io.imread(file_path, plugin="tifffile"), dtype=np.int32)
         file_name = cls._split_file_path(file_path)
         case_number, stack_number, channel_name = cls._split_file_name(file_name)
         return cls(image, case_number, stack_number, channel_name)
@@ -130,12 +130,14 @@ class ColocalisedChannelFile(ChannelFile):
         self.colocalised_with = colocalised_with
         self.object_list = object_list
         self.output_file_name = f"{self.case_number}-{self.stack_number}-{self.channel_name}-coloc-{self.colocalised_with}.tif"
-        
+        self.image = np.array(self.image, dtype=np.int32)
     
     def save_to_tiff(self, out_dir, out_file_name=None):
         if out_file_name is None:
             out_file_name = self.output_file_name
         io.imsave(
             os.path.join(out_dir, out_file_name),
-            self.image, plugin="tifffile"
+            self.image, 
+            plugin="tifffile",
+            check_contrast=False
         )
