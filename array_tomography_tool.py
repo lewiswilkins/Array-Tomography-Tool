@@ -59,7 +59,6 @@ def _parse_config(config_path: str) -> dict:
     return config_dict
     # return _make_shallow_dict(config_dict)
 
-
 def process_stack(
     case_number: str,
     stack_number: str,
@@ -90,18 +89,16 @@ def process_stack(
     output_results_csv(colocalised_results, out_dir, config["csv_name"])
     for result in colocalised_results:
         result.save_images(out_dir)
+    del channels
+    del colocalised_results
 
 def output_results_csv(colocalised_results, out_dir, out_file_name):
-    #This needs to be changed so it doesnt over-write each time a new case-stack
-    #is run over. Probably do a check if exists, if it does just read in the csv
-    #and append the new data
     file_path = os.path.join(out_dir, out_file_name)
     if os.path.isfile(file_path):
         pd = read_csv(file_path)
         csv_dict = pd.to_dict("list")
     else:
         csv_dict = create_csv_dict(colocalised_results)
-    print(csv_dict)
     combinations_set = set([key for key in get_combination_names(colocalised_results)])
     for result in colocalised_results:
         csv_dict["case"].append(result.case_number)
