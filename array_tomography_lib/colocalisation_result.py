@@ -13,14 +13,12 @@ class ColocalisationResult:
     
     def __init__(
         self,
-        case_number: str,
-        stack_number: str, 
+        name: str,
         channel_name: str,
         original_coords=None,
         original_image=None
     ):
-        self.case_number = case_number
-        self.stack_number = stack_number
+        self.name = name
         self.channel_name = channel_name
         self.colocalised_images = []
         self.original_coords = original_coords
@@ -28,8 +26,7 @@ class ColocalisationResult:
     @classmethod
     def from_channel_file(cls, channel_file):
         return cls(
-            case_number=channel_file.case_number,
-            stack_number=channel_file.stack_number,
+            name=channel_file.name,
             channel_name=channel_file.channel_name,
             original_coords=channel_file.object_coords,
             original_image=channel_file.image
@@ -51,8 +48,7 @@ class ColocalisationResult:
                 )
                 temp_colocalised_channel_file = ColocalisedChannelFile(
                     image=combined_image,
-                    case_number=self.case_number,
-                    stack_number=self.stack_number,
+                    name=self.name,
                     channel_name=self.channel_name,
                     colocalised_with=self._get_colocalised_with_string(combination),
                     object_list=combined_object_list
