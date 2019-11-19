@@ -63,10 +63,14 @@ class ColocalisationResult:
                 image.save_to_tiff(out_dir)
     
     def _get_colocalised_with_string(self, images):
+        """Function to get the colocalised with string. 
+        Makes sure the string is in alphabetical order."""
         colocalised_with_string = ""
+        colocalised_with_list = []
         for image in images:
-            colocalised_with_string += image.colocalised_with 
-        return colocalised_with_string
+            colocalised_with_list.append(image.colocalised_with)
+        colocalised_with_list.sort()
+        return colocalised_with_string.join(colocalised_with_list)
 
     def _combine_dicts(self, dict_1, dict_2):
         if len(dict_1) < len(dict_2):

@@ -98,7 +98,7 @@ def output_results_csv(colocalised_results, out_dir, out_file_name):
         csv_dict = pd.to_dict("list")
     else:
         csv_dict = create_csv_dict(colocalised_results)
-    combinations_set = set([key for key in get_combination_names(colocalised_results)])
+    # combinations_set = set([key for key in get_combination_names(colocalised_results)])
     for result in colocalised_results:
         csv_dict["name"].append(result.name)
         csv_dict["channel"].append(result.channel_name)
@@ -106,7 +106,7 @@ def output_results_csv(colocalised_results, out_dir, out_file_name):
         combination_object_count = {
             x.colocalised_with : len(x.object_list) for x in result.colocalised_images
             }
-        for key in combinations_set:
+        for key in get_combination_names(colocalised_results):
             if key in combination_object_count:
                 csv_dict[key].append(combination_object_count[key])
             else:
@@ -130,6 +130,7 @@ def get_combination_names(colocalised_results):
         combination_names.add(result.channel_name)
         for image in result.colocalised_images:
             combination_names.add(image.colocalised_with)
+    print(f"combination names {combination_names}")
     return combination_names
                     
 def get_names(dir_path):
