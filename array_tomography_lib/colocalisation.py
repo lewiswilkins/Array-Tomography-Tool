@@ -44,12 +44,11 @@ def colocalise(channel_1, channel_2, config):
     method = config["channels"][channel_1.channel_name][channel_2.channel_name]
     print(f"Colocalising {channel_1.channel_name} with {channel_2.channel_name} based on {method}.")
     print(f"{len(channel_1.objects)} objects in {channel_1_name}")
-    print(f"{len(channel_2.objects)} objects in {channel_2_name}")
+    print(f"{len(channel_2.objects)} objects in {channel_2_name}\n")
     if method == "distance":
         xy_resolution = config["xy_resolution"]
         z_resolution = config["z_resolution"]
         max_distance = config["max_distance"]
-        print(f"xy: {xy_resolution} z: {z_resolution} max dist: {max_distance}")
         return _compute_distance(
             channel_1, channel_2, xy_resolution, z_resolution, max_distance
             )
@@ -89,7 +88,7 @@ def _compute_distance(
 
     print(f"{channel_1.channel_name} and {channel_2.channel_name}: ")
     print(f"{len(channel_1_centroids)} objects in channel 1")
-    print(f"Found {len(min_distances)} objects within {max_distance}")
+    print(f"Found {len(min_distances)} objects within {max_distance}\n")
 
     return colocalised_image, min_distances
 
@@ -140,7 +139,7 @@ def _compute_overlap(channel_1, channel_2, min_overlap=0.25):
     print(f"{len(channel_1.objects)} objects in channel 1")
     print(f"Found {len(overlaps)} overlapping objects")
     if len(overlaps) > 0:
-        print(f"mean overlap is {sum(overlaps)/len(overlaps)}")
+        print(f"mean overlap is {sum(overlaps)/len(overlaps)}\n")
     else:
         print("No overlaps found!")
     return colocalised_image, overlaps

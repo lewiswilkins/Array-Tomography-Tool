@@ -90,15 +90,16 @@ def process_stack(
         result.save_images(out_dir)
     del channels
     del colocalised_results
+    print("\n\n")
 
 def output_results_csv(colocalised_results, out_dir, out_file_name):
+    print("Saving csv.")
     file_path = os.path.join(out_dir, out_file_name)
     if os.path.isfile(file_path):
         pd = read_csv(file_path)
         csv_dict = pd.to_dict("list")
     else:
         csv_dict = create_csv_dict(colocalised_results)
-    # combinations_set = set([key for key in get_combination_names(colocalised_results)])
     for result in colocalised_results:
         csv_dict["name"].append(result.name)
         csv_dict["channel"].append(result.channel_name)
@@ -130,7 +131,6 @@ def get_combination_names(colocalised_results):
         combination_names.add(result.channel_name)
         for image in result.colocalised_images:
             combination_names.add(image.colocalised_with)
-    print(f"combination names {combination_names}")
     return combination_names
                     
 def get_names(dir_path):

@@ -58,6 +58,7 @@ class ColocalisationResult:
         self.colocalised_images += temp_combination_images
     
     def save_images(self, out_dir):
+        print("Saving images.")
         for image in self.colocalised_images:
             if image.image is not None:
                 image.save_to_tiff(out_dir)
