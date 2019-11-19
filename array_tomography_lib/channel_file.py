@@ -17,13 +17,11 @@ class ChannelFile:
     def __init__(
         self,
         image: np.ndarray,
-        case_number: str,
-        stack_number: str,
+        name: str,
         channel_name: str,
     ):
         self.image = image
-        self.case_number = case_number
-        self.stack_number = stack_number
+        self.name = name
         self.channel_name = channel_name
         self._labelled_image = None
         self._objects = None
@@ -36,8 +34,8 @@ class ChannelFile:
         # will need to try to load from pickle cache first
         image = np.array(io.imread(file_path, plugin="tifffile"), dtype=np.int32)
         file_name = cls._split_file_path(file_path)
-        case_number, stack_number, channel_name = cls._split_file_name(file_name)
-        return cls(image, case_number, stack_number, channel_name)
+        name, channel_name = cls._split_file_name(file_name)
+        return cls(image, name, channel_name)
 
     @classmethod
     def _split_file_path(cls, file_path):
@@ -47,9 +45,10 @@ class ChannelFile:
 
     @classmethod
     def _split_file_name(cls, file_name):
-        case_number, stack_number, channel_name = file_name.split("-")
+        channel_name = file_name.split("-")[-1]
+        name = "-".join(file_name.split("-")[:-1])
 
-        return case_number, stack_number, channel_name
+        return name, channel_name
 
     @property
     @functools.lru_cache()
@@ -94,8 +93,7 @@ class ChannelFile:
 
         colocalisation_channel_file = ColocalisedChannelFile(
             image=colocalised_image,
-            case_number=self.case_number,
-            stack_number=self.stack_number,
+            name=self.name,
             channel_name=self.channel_name,
             colocalised_with=other_channel.channel_name,
             object_list=object_list,
@@ -122,16 +120,15 @@ class ColocalisedChannelFile(ChannelFile):
     def __init__(
         self,
         image: np.ndarray,
-        case_number: str,
-        stack_number: str,
+        name: str,
         channel_name: str,
         colocalised_with: str,
         object_list: dict,
     ):
-        super().__init__(image, case_number, stack_number, channel_name)
+        super().__init__(image, name, channel_name)
         self.colocalised_with = colocalised_with
         self.object_list = object_list
-        self.output_file_name = f"{self.case_number}-{self.stack_number}-{self.channel_name}-coloc-{self.colocalised_with}.tif"
+        self.output_file_name = f"{self.name}-{self.channel_name}-coloc-{self.colocalised_with}.tif"
         self.image = np.array(self.image, dtype=np.int32)
     
     def save_to_tiff(self, out_dir, out_file_name=None):

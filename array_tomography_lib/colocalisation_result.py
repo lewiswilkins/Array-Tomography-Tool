@@ -13,14 +13,12 @@ class ColocalisationResult:
     
     def __init__(
         self,
-        case_number: str,
-        stack_number: str, 
+        name: str,
         channel_name: str,
         original_coords=None,
         original_image=None
     ):
-        self.case_number = case_number
-        self.stack_number = stack_number
+        self.name = name
         self.channel_name = channel_name
         self.colocalised_images = []
         self.original_coords = original_coords
@@ -28,8 +26,7 @@ class ColocalisationResult:
     @classmethod
     def from_channel_file(cls, channel_file):
         return cls(
-            case_number=channel_file.case_number,
-            stack_number=channel_file.stack_number,
+            name=channel_file.name,
             channel_name=channel_file.channel_name,
             original_coords=channel_file.object_coords,
             original_image=channel_file.image
@@ -40,6 +37,7 @@ class ColocalisationResult:
         # print(f"There are {len(self.colocalised_images)} in the object.")
     
     def calculate_combination_images(self):
+        temp_combination_images = []
         for x in range(2, len(self.colocalised_images) + 1):
             for combination in itertools.combinations(self.colocalised_images, x):
                 object_lists = (image.object_list for image in combination)
@@ -51,24 +49,29 @@ class ColocalisationResult:
                 )
                 temp_colocalised_channel_file = ColocalisedChannelFile(
                     image=combined_image,
-                    case_number=self.case_number,
-                    stack_number=self.stack_number,
+                    name=self.name,
                     channel_name=self.channel_name,
                     colocalised_with=self._get_colocalised_with_string(combination),
                     object_list=combined_object_list
                 )
-            self.colocalised_images.append(temp_colocalised_channel_file)
+            temp_combination_images.append(temp_colocalised_channel_file)
+        self.colocalised_images += temp_combination_images
     
     def save_images(self, out_dir):
+        print("Saving images.")
         for image in self.colocalised_images:
             if image.image is not None:
                 image.save_to_tiff(out_dir)
     
     def _get_colocalised_with_string(self, images):
+        """Function to get the colocalised with string. 
+        Makes sure the string is in alphabetical order."""
         colocalised_with_string = ""
+        colocalised_with_list = []
         for image in images:
-            colocalised_with_string += image.colocalised_with 
-        return colocalised_with_string
+            colocalised_with_list.append(image.colocalised_with)
+        colocalised_with_list.sort()
+        return colocalised_with_string.join(colocalised_with_list)
 
     def _combine_dicts(self, dict_1, dict_2):
         if len(dict_1) < len(dict_2):
