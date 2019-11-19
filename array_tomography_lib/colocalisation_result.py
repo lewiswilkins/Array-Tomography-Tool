@@ -37,6 +37,7 @@ class ColocalisationResult:
         # print(f"There are {len(self.colocalised_images)} in the object.")
     
     def calculate_combination_images(self):
+        temp_combination_images = []
         for x in range(2, len(self.colocalised_images) + 1):
             for combination in itertools.combinations(self.colocalised_images, x):
                 object_lists = (image.object_list for image in combination)
@@ -53,7 +54,8 @@ class ColocalisationResult:
                     colocalised_with=self._get_colocalised_with_string(combination),
                     object_list=combined_object_list
                 )
-            self.colocalised_images.append(temp_colocalised_channel_file)
+            temp_combination_images.append(temp_colocalised_channel_file)
+        self.colocalised_images += temp_combination_images
     
     def save_images(self, out_dir):
         for image in self.colocalised_images:

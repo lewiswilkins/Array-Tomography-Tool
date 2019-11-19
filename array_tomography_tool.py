@@ -25,8 +25,8 @@ def main():
 
     config = _parse_config(config_path)
     start = time.time()
-    for case_number, stack_number in get_case_stack_numbers(in_dir):
-        process_stack(case_number, stack_number, config, in_dir, out_dir)
+    for name in get_names(in_dir):
+        process_stack(name, config, in_dir, out_dir)
 
     end = time.time()
 
@@ -60,15 +60,14 @@ def _parse_config(config_path: str) -> dict:
     # return _make_shallow_dict(config_dict)
 
 def process_stack(
-    case_number: str,
-    stack_number: str,
+    name: str,
     config: dict, 
     in_dir: str,
     out_dir: str
 ):
-    print(f"Processing {case_number}-{stack_number}")
+    print(f"Processing {name}")
     channels = []
-    for channel_filepath in get_channels(case_number, stack_number, in_dir):
+    for channel_filepath in get_channels(name, config["channels"], in_dir):
         channel_file = ChannelFile.from_tiff(channel_filepath)
         channels.append(channel_file)
 
@@ -101,8 +100,7 @@ def output_results_csv(colocalised_results, out_dir, out_file_name):
         csv_dict = create_csv_dict(colocalised_results)
     combinations_set = set([key for key in get_combination_names(colocalised_results)])
     for result in colocalised_results:
-        csv_dict["case"].append(result.case_number)
-        csv_dict["stack"].append(result.stack_number)
+        csv_dict["name"].append(result.name)
         csv_dict["channel"].append(result.channel_name)
         csv_dict["objects"].append(len(result.original_coords))
         combination_object_count = {
@@ -120,7 +118,7 @@ def output_results_csv(colocalised_results, out_dir, out_file_name):
         )
 
 def create_csv_dict(colocalised_results):
-    titles_dict = {"case" : [], "stack" : [], "channel" : [], "objects" : []}
+    titles_dict = {"name" : [], "channel" : [], "objects" : []}
     combination_dict = {}
     for key in get_combination_names(colocalised_results):
         combination_dict[key] = []
@@ -134,20 +132,19 @@ def get_combination_names(colocalised_results):
             combination_names.add(image.colocalised_with)
     return combination_names
                     
-def get_case_stack_numbers(dir_path):
-    case_stack_numbers = set()
-    r = re.compile(r"^.*\/(\d+)-(stack\d+)-.*.tif")
+def get_names(dir_path):
+    names = set()
+    r = re.compile(r"^.*\/(.*)-.*.tif")
     for filename in glob.glob(f"{dir_path}/*.tif"):
         match = r.match(filename)
-        case_number, stack_number = match.group(1), match.group(2)
-        case_stack_numbers.add((case_number, stack_number))
+        name = match.group(1)
+        names.add(name)
 
-    return list(case_stack_numbers)
+    return list(names)
 
 
-def get_channels(case_number, stack_number, dir_path):
-    r = re.compile(rf".*/{case_number}-{stack_number}-.*\.tif")
-    channels = [filepath for filepath in glob.glob(f"{dir_path}/*.tif") if r.match(filepath)]
+def get_channels(name, channels, dir_path):
+    channels = [f"{dir_path}/{name}-{channel}.tif" for channel in channels]
     return channels
 
 
