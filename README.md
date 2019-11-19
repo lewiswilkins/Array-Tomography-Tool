@@ -9,7 +9,7 @@ https://www.docker.com/products/docker-desktop to download and install.
 Then you need to get the Docker image for the tool. Go to your terminal then
 paste in the following command
 
-`docker pull lewiswilkins/array_tomography_tool:latest`
+`docker pull lewiswilkins/array_tomography_tool:v0.1`
 
 This will probably take a couple of mins to download. Once complete, you are
 ready to run the tool. For now it only does the colocalisation. The tool takes 3
