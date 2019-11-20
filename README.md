@@ -1,5 +1,5 @@
 # Array Tomography Tool
-
+![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/lewiswilkins/array_tomography_tool)
 ## Running Array Tomography Tool
 
 The easiest method to running the tool is to use Docker. First you will require
