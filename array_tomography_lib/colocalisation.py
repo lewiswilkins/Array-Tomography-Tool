@@ -1,13 +1,10 @@
 import itertools
 import time
 from math import sqrt
-from multiprocessing import Pool
 from typing import List
 
 import numpy as np
-import progressbar
-from numba import njit, prange
-from PIL import Image
+from numba import njit
 from skimage import measure
 
 
@@ -93,7 +90,7 @@ def _compute_distance(
     return colocalised_image, min_distances
 
 
-@njit(cache=True, fastmath=True, nogil=True)
+@njit(cache=True, fastmath=True)
 def _calculate_distances(
         centroids, centroids_list, xy_resolution=0.102, z_resolution=0.07
     ):

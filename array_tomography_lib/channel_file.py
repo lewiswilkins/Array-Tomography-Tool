@@ -2,7 +2,8 @@ import pickle
 import sys
 from typing import List
 import os
-import functools
+# import functools
+from cached_property import cached_property
 
 import numpy as np
 from skimage import io, measure
@@ -50,8 +51,7 @@ class ChannelFile:
 
         return name, channel_name
 
-    @property
-    @functools.lru_cache()
+    @cached_property
     def labelled_image(self):
         self._labelled_image = np.array(measure.label(
             self.image, connectivity=1
@@ -60,33 +60,26 @@ class ChannelFile:
             
         return self._labelled_image
 
-    @property
-    @functools.lru_cache()
+    @cached_property
     def labels(self):
         self._labels = [ob.label for ob in self.objects]
         return self._labels
 
-    @property
-    @functools.lru_cache()
+    @cached_property
     def objects(self):
         self._objects = measure.regionprops(self.labelled_image, cache=False)
         return self._objects
 
-
-    @property
-    @functools.lru_cache()
+    @cached_property
     def centroids(self):
         self._centroids = np.array([ob.centroid for ob in self.objects])
         return self._centroids
 
-
-    @property
-    @functools.lru_cache()
+    @cached_property
     def object_coords(self):
         self._object_coords = np.array([ob.coords for ob in self.objects])
 
         return self._object_coords
-
 
     def colocalise_with(self, other_channel, config):
         colocalised_image, object_list = colocalisation.colocalise(self, other_channel, config)

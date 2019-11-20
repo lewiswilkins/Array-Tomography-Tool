@@ -6,14 +6,15 @@ import os
 import re
 import time
 import itertools
+import multiprocessing
 from pandas import DataFrame, read_csv
+import gc 
 
 import yaml
 
 from array_tomography_lib import ChannelFile, colocalisation, ColocalisationResult
 
 
-CHANNEL_NAMES = ["PSD", "ALZ50", "SY38"]
 CACHE_DIR = ".file_cache"
 
 
@@ -25,6 +26,10 @@ def main():
 
     config = _parse_config(config_path)
     start = time.time()
+    # processes = 1
+    # p = multiprocessing.Pool(processes=processes)
+    # args = ((name, config, in_dir, out_dir) for name in get_names(in_dir))
+    # p.starmap(process_stack, args)
     for name in get_names(in_dir):
         process_stack(name, config, in_dir, out_dir)
 
@@ -90,6 +95,7 @@ def process_stack(
         result.save_images(out_dir)
     del channels
     del colocalised_results
+    n = gc.collect()
     print("\n\n")
 
 def output_results_csv(colocalised_results, out_dir, out_file_name):
