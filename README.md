@@ -24,7 +24,7 @@ An example of the config file can be found in this repo - `example_config.yaml`.
 To run the tool, you will use the following command:
 
 
-`docker run -it -v /path/to/files/:/mnt/files/ lewiswilkins/array_tomography_tool:v0.2.2  --input
+`docker run -it -v /path/to/files/:/mnt/files/:delegated lewiswilkins/array_tomography_tool:v0.2.2  --input
 /mnt/files/inputs/ --output /mnt/files/output/ --config /mnt/files/config.yaml`
 
 Here you will need to replace `/path/to/files/` with the path to wherever your
