@@ -26,7 +26,7 @@ def main():
 
     config = _parse_config(config_path)
     start = time.time()
-    # processes = 1
+    # processes = 2
     # p = multiprocessing.Pool(processes=processes)
     # args = ((name, config, in_dir, out_dir) for name in get_names(in_dir))
     # p.starmap(process_stack, args)
