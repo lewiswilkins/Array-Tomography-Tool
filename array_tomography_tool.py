@@ -23,15 +23,23 @@ def main():
     in_dir = args.input
     out_dir = args.output
     config_path = args.config
+    _check_dir_exists(in_dir)
+    _check_dir_exists(out_dir)
+    processes = args.processes
+    if processes == 0:
+        processes = multiprocessing.cpu_count()
 
     config = _parse_config(config_path)
     start = time.time()
-    # processes = 2
-    # p = multiprocessing.Pool(processes=processes)
-    # args = ((name, config, in_dir, out_dir) for name in get_names(in_dir))
-    # p.starmap(process_stack, args)
-    for name in get_names(in_dir):
-        process_stack(name, config, in_dir, out_dir)
+    
+    if processes == 1:
+        for name in get_names(in_dir):
+            process_stack(name, config, in_dir, out_dir)
+    else:
+        p = multiprocessing.Pool(processes=processes)
+        args = ((name, config, in_dir, out_dir) for name in get_names(in_dir))
+        p.starmap(process_stack, args)
+    
 
     end = time.time()
 
@@ -55,14 +63,28 @@ def _parse_args():
         default="test_data/colocalisation_types.yaml",
         help="A yaml config file mapping channel pairs to the type of colocalisation to perform",
     )
+    parser.add_argument(
+        "--processes",
+        default=1,
+        help="The number of processes to use.",
+        type=int,
+
+    )
     return parser.parse_args()
 
+def _check_dir_exists(dir):
+    if not os.path.isdir(dir):
+        print(f"{dir} does not exist. Check your paths are all correct!")
+        exit()
 
 def _parse_config(config_path: str) -> dict:
-    with open(config_path) as f:
-        config_dict = yaml.load(f, Loader=yaml.Loader)
-    return config_dict
-    # return _make_shallow_dict(config_dict)
+    try:
+        with open(config_path) as f:
+            config_dict = yaml.load(f, Loader=yaml.Loader)
+        return config_dict
+    except FileNotFoundError:
+        print(f"Config file does not exist! Check the path/name are correct.")
+        exit()
 
 def process_stack(
     name: str,
@@ -79,6 +101,7 @@ def process_stack(
     for channel in channels:
         print(channel.channel_name)
     colocalised_results = []
+    t_colocalise_s = time.time()
     for channel_1  in channels:
         print(f"Colocalising {channel_1.channel_name} with all other channels.")
         temp_colocalised_result = ColocalisationResult.from_channel_file(channel_1)
@@ -86,13 +109,27 @@ def process_stack(
             if channel_1.channel_name == channel_2.channel_name:
                 continue
             temp_colocalised_channel = channel_1.colocalise_with(channel_2, config)
+            if temp_colocalised_channel is ValueError:
+                print(f"There seems to be a mismatch of image dimensions. Check all \
+                    the images in {name} have the same number of stacks. Skipping\
+                        for now.")
+                return None
             temp_colocalised_result.add_colocalised_image(temp_colocalised_channel)
         temp_colocalised_result.calculate_combination_images()
         colocalised_results.append(temp_colocalised_result)
-    
+    t_colocalise_e = time.time()
+    print(f"Time for colocalise = {t_colocalise_e-t_colocalise_s}")
+    t_output_s = time.time()
     output_results_csv(colocalised_results, out_dir, config["csv_name"])
+    t_output_e = time.time()
+    print(f"Time for output = {t_output_e-t_output_s}")
+
+    t_save_s = time.time()
     for result in colocalised_results:
         result.save_images(out_dir)
+    t_save_e = time.time()
+    print(f"Time for save = {t_save_e-t_save_s}")
+
     del channels
     del colocalised_results
     n = gc.collect()

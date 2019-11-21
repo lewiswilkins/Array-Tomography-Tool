@@ -38,7 +38,12 @@ def colocalise(channel_1, channel_2, config):
             object -> overlap fraction """
     channel_1_name = channel_1.channel_name
     channel_2_name = channel_2.channel_name
-    method = config["channels"][channel_1.channel_name][channel_2.channel_name]
+    try:
+        method = config["channels"][channel_1.channel_name][channel_2.channel_name]
+    except KeyError as err:
+        print(f"Cannot get method for {channel_2.channel_name}. Check your config,"\
+    f" you probably havent set a method for {channel_2.channel_name}.")
+        exit()
     print(f"Colocalising {channel_1.channel_name} with {channel_2.channel_name} based on {method}.")
     print(f"{len(channel_1.objects)} objects in {channel_1_name}")
     print(f"{len(channel_2.objects)} objects in {channel_2_name}\n")
@@ -120,6 +125,8 @@ def _compute_overlap(channel_1, channel_2, min_overlap=0.25):
     channel_1_image = channel_1.labelled_image
     channel_2_image = channel_2.labelled_image
     overlapping_pixels = _get_overlap_mask(channel_1_image, channel_2_image)
+    if overlapping_pixels is ValueError:
+        return overlapping_pixels, overlapping_pixels
     overlapping_parts_ch1 = np.ma.masked_array(channel_1_image, mask=~overlapping_pixels)
     overlapping_regions = measure.regionprops(overlapping_parts_ch1)
     overlaps = {}
@@ -148,10 +155,16 @@ def get_colocalised_image(original_image, label_list, object_coords):
     for label in label_list: 
         coords = object_coords[label-1]
         for pixel in coords:
-            colocalised_image[pixel[0]][pixel[1]][pixel[2]] = 1
+            if len(pixel) == 2:
+                colocalised_image[pixel[0]][pixel[1]] = 1
+            elif len(pixel) == 3:
+                colocalised_image[pixel[0]][pixel[1]][pixel[2]] = 1
     
     return colocalised_image
     
 def _get_overlap_mask(image_1, image_2):
-    return np.logical_and(image_1, image_2)
-
+    try:
+        return np.logical_and(image_1, image_2)
+    except ValueError as err:
+        print("Images do not have the same dimensions. Please check and retry.")
+        return err
