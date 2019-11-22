@@ -41,23 +41,19 @@ class ChannelFile:
     @classmethod
     def _split_file_path(cls, file_path):
         file_name = file_path.rsplit("/", 1)[-1].split(".")[0]
-
         return file_name
 
     @classmethod
     def _split_file_name(cls, file_name):
         channel_name = file_name.split("-")[-1]
         name = "-".join(file_name.split("-")[:-1])
-
         return name, channel_name
 
     @cached_property
     def labelled_image(self):
         self._labelled_image = np.array(measure.label(
             self.image, connectivity=1
-        ))
-
-            
+        )) 
         return self._labelled_image
 
     @cached_property

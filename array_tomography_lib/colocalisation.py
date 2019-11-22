@@ -55,7 +55,7 @@ def colocalise(channel_1, channel_2, config):
             channel_1, channel_2, xy_resolution, z_resolution, max_distance
             )
     elif method == "overlap":
-        return _compute_overlap(channel_1, channel_2)
+        return _compute_overlap(channel_1, channel_2, min_overlap=config["min_overlap"])
 
 
 def _read_config(config, channel_1, channel_2):
