@@ -54,7 +54,7 @@ class ColocalisationResult:
                     colocalised_with=self._get_colocalised_with_string(combination),
                     object_list=combined_object_list
                 )
-            temp_combination_images.append(temp_colocalised_channel_file)
+                temp_combination_images.append(temp_colocalised_channel_file)
         self.colocalised_images += temp_combination_images
     
     def save_images(self, out_dir):
