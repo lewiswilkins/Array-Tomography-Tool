@@ -108,6 +108,8 @@ def process_stack(
         for channel_2 in channels:
             if channel_1.channel_name == channel_2.channel_name:
                 continue
+            if config["channels"][channel_1.channel_name][channel_2.channel_name] == "none":
+                continue
             temp_colocalised_channel = channel_1.colocalise_with(channel_2, config)
             if temp_colocalised_channel is ValueError:
                 print(f"There seems to be a mismatch of image dimensions. Check all \

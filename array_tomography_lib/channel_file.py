@@ -120,7 +120,7 @@ class ColocalisedChannelFile(ChannelFile):
         super().__init__(image, name, channel_name)
         self.colocalised_with = colocalised_with
         self.object_list = object_list
-        self.output_file_name = f"{self.name}-{self.channel_name}-coloc-{self.colocalised_with}.tif"
+        self.output_file_name = f"{self.name}-{self.channel_name}{self.colocalised_with}.tif"
         self.image = np.array(self.image, dtype=np.int16)
     
     def save_to_tiff(self, out_dir, out_file_name=None):
