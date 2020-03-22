@@ -29,6 +29,7 @@ class ChannelFile:
         self._labels = None
         self._centroids = None
         self._object_coords = None
+        self._object_sizes = None
 
     @classmethod
     def from_tiff(cls, file_path):
@@ -74,8 +75,12 @@ class ChannelFile:
     @cached_property
     def object_coords(self):
         self._object_coords = np.array([ob.coords for ob in self.objects])
-
         return self._object_coords
+    
+    @cached_property
+    def object_sizes(self):
+        self._object_sizes = np.array([ob.area for ob in self.objects])
+        return self._object_sizes
 
     def colocalise_with(self, other_channel, config):
         colocalised_image, object_list = colocalisation.colocalise(self, other_channel, config)
