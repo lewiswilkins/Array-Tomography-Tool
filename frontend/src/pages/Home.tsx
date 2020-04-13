@@ -1,5 +1,4 @@
 import React from "react";
-import Layout from "../components/Layout";
 import styled from "styled-components";
 import colors from "../config/colors";
 import TopContent from "../components/TopContent";

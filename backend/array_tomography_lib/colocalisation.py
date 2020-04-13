@@ -47,14 +47,14 @@ def colocalise(channel_1, channel_2, config):
     print(f"Colocalising {channel_1.channel_name} with {channel_2.channel_name} based on {method}.")
     print(f"{len(channel_1.objects)} objects in {channel_1_name}")
     print(f"{len(channel_2.objects)} objects in {channel_2_name}\n")
-    if method == "distance":
+    if method.lower() == "distance":
         xy_resolution = config["xy_resolution"]
         z_resolution = config["z_resolution"]
         max_distance = config["max_distance"]
         return _compute_distance(
             channel_1, channel_2, xy_resolution, z_resolution, max_distance
             )
-    elif method == "overlap":
+    elif method.lower() == "overlap":
         return _compute_overlap(channel_1, channel_2, min_overlap=config["min_overlap"])
 
 

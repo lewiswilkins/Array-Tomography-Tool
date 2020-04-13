@@ -1,10 +1,8 @@
 import React, {useState, useReducer } from "react";
 import { makeStyles} from '@material-ui/core/styles';
-
 import Button from '@material-ui/core/Button';
 import Typography from "@material-ui/core/Typography";
 import Paper from '@material-ui/core/Paper';
-import Grid from '@material-ui/core/Grid';
 import TextField from '@material-ui/core/TextField';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
@@ -14,6 +12,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
+import Grid from '@material-ui/core/Grid';
 import { stat } from "fs";
 import fetch from 'isomorphic-fetch';
 import { ThemeProvider } from '@material-ui/styles';
@@ -21,6 +20,8 @@ import TopContent from "../components/TopContent";
 import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
 import StepLabel from '@material-ui/core/StepLabel';
+import useInterval from '@use-it/interval';
+
 
 // const projectTheme = theme;
 const useStyles = makeStyles(theme => ({
@@ -396,11 +397,53 @@ const ColocalisationConfirmation = (props: any) => {
 }
 
 const ColocalisationRunning = (props: any) => {
+    console.log(props.jobId)
+    const [nImagesProcessed, setNImagesProcessed] = React.useState();
+    const [caseName, setCaseName] = React.useState();
+    const [colocalising, setColocalising] = React.useState();
+
+    useInterval(() => {
+        getLog(props.jobId, "images_processed").then(setNImagesProcessed);
+        getLog(props.jobId, "case_name").then(setCaseName);
+        getLog(props.jobId, "colocalising").then(setColocalising);
+    }, 1000);
+
+    let nImages;
+    if(nImagesProcessed == "Finished!"){
+        nImages = <Typography variant="h5">{nImagesProcessed}</Typography>
+    }
+    else{
+        nImages = <Typography variant="h5">Processing image {nImagesProcessed}</Typography>
+    }
+
+
+    
     return (
-        <Typography variant="h5">Your job has been submitted!</Typography>
+        <div>
+            <Typography variant="h5">Your job has been submitted!</Typography>
+            {nImages}
+            <Typography variant="h5">{caseName}</Typography>
+            <Typography variant="h5">{colocalising}</Typography>
+        </div>
     );
 }
 
+
+const getLog = async (jobId: string, parameter: string) =>{
+    const log = await fetch(
+        `http://127.0.0.1:5000/colocalisation/${jobId}/${parameter}/`, {
+        method: 'GET',
+        mode: 'cors', 
+        cache: 'no-cache',
+        headers: {
+            'Access-Control-Allow-Origin':'',
+        },
+    });
+    const data = await log.text();
+    console.log(data);
+
+    return data;
+}
 
 function getSteps() {
     return [
@@ -423,9 +466,14 @@ function getSteps() {
     const steps = getSteps();
     
     const handleNext = () => {
-        if(activeStep==1){
-            channelsDispatch({channel: "init", coloc: "", value: initialChannelList});
+        if(activeStep==0){
+            const date = new Date();
+            console.log(date.getTime());
+            dispatch({type: "job_id", value: date.getTime(), cast: ""})
+        }
+        else if(activeStep==1){
             
+            channelsDispatch({channel: "init", coloc: "", value: initialChannelList});
         }
         else if(activeStep==2){
             dispatch({type: "channels", value: channelsState, cast: ""});
@@ -448,6 +496,7 @@ function getSteps() {
     // Handling config update   
 
     const initialConfig = {
+        job_id: "",
         input_dir: "",
         output_dir: "",
         output_filename: "",
@@ -497,18 +546,19 @@ function getSteps() {
     const [channelsState, channelsDispatch] = useReducer(channelsReducer, initialChannelState);
     console.log(channelsState);
 
-    
     const postConfig = () => {
-        console.log("doign soemthign")
-                    return fetch('http://127.0.0.1:5000/', {
-                    method: 'POST',
-                    body: JSON.stringify(configState),
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                }).then((res: any) => {
-                    return res;
-                }).catch((err: any) => err)}
+        console.log("POST state");
+        return fetch('http://127.0.0.1:5000/colocalisation/', {
+        method: 'POST',
+        body: JSON.stringify(configState),
+        headers: {
+            'Content-Type': 'application/json'
+            },
+        });
+    }
+    
+   
+
     let stepperContent;
     switch (activeStep){
         case 0:
@@ -548,7 +598,7 @@ function getSteps() {
             stepperContent =  (<ColocalisationConfirmation config={configState} />);
             break;
         case 5:
-            stepperContent = (<ColocalisationRunning/>);
+            stepperContent = (<ColocalisationRunning jobId={configState["job_id"]}/>);
             break;
         default:
             stepperContent = (<ColocalisationGetStarted/>);
@@ -570,7 +620,6 @@ function getSteps() {
             {activeStep === steps.length ? (
             <div>
                 {stepperContent}
-                }
                 <Button onClick={handleReset}>Reset</Button>
             </div>
             ) : (

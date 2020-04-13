@@ -9,6 +9,9 @@ import itertools
 import multiprocessing
 from pandas import DataFrame, read_csv
 import gc 
+from pathlib import Path
+import logging
+
 
 import yaml
 
@@ -16,6 +19,31 @@ from array_tomography_lib import ChannelFile, colocalisation, ColocalisationResu
 
 
 CACHE_DIR = ".file_cache"
+
+logger = logging.getLogger(__name__)
+
+
+def log(config: dict, log_file: str, value):
+    """Wirite the frontend logs."""
+    if "job_id" in config:
+        job_id = config["job_id"]
+        if not Path(f"/tmp/{job_id}").exists():
+            Path(f"/tmp/{job_id}").mkdir()
+        Path(f"/tmp/{job_id}/{log_file}.out").write_text(value)
+
+
+def server_run(config: dict):
+    in_dir = config["input_dir"]
+    out_dir = config["output_dir"]
+    _check_dir_exists(in_dir)
+    _check_dir_exists(out_dir)
+
+    case_stack_names = get_names(in_dir)
+    for i,name in enumerate(case_stack_names):
+        log(config, "images_processed", f"{i+1}/{len(case_stack_names)}")
+        process_stack(name, config, in_dir, out_dir)
+        if i+1 == len(case_stack_names):
+            log(config, "images_processed", "Finished!")
 
 
 def main():
@@ -33,7 +61,7 @@ def main():
     start = time.time()
     
     if processes == 1:
-        for name in get_names(in_dir):
+        for name in (get_names(in_dir)):
             process_stack(name, config, in_dir, out_dir)
     else:
         p = multiprocessing.Pool(processes=processes)
@@ -42,8 +70,7 @@ def main():
     
 
     end = time.time()
-
-    print(f"Took {end-start}s")
+    logger.info(f"Took {end-start}s")
 
 def _parse_args():
     parser = argparse.ArgumentParser(
@@ -74,7 +101,7 @@ def _parse_args():
 
 def _check_dir_exists(dir):
     if not os.path.isdir(dir):
-        print(f"{dir} does not exist. Check your paths are all correct!")
+        logger.error(f"{dir} does not exist. Check your paths are all correct!")
         exit()
 
 def _parse_config(config_path: str) -> dict:
@@ -83,7 +110,7 @@ def _parse_config(config_path: str) -> dict:
             config_dict = yaml.load(f, Loader=yaml.Loader)
         return config_dict
     except FileNotFoundError:
-        print(f"Config file does not exist! Check the path/name are correct.")
+        logger.error("Config file does not exist! Check the path/name are correct.")
         exit()
 
 def process_stack(
@@ -92,18 +119,18 @@ def process_stack(
     in_dir: str,
     out_dir: str
 ):
-    print(f"Processing {name}")
+    logger.info(f"Processing {name}")
+    log(config, "case_name", name)
     channels = []
     for channel_filepath in get_channels(name, config["channels"], in_dir):
         channel_file = ChannelFile.from_tiff(channel_filepath)
         channels.append(channel_file)
 
-    for channel in channels:
-        print(channel.channel_name)
     colocalised_results = []
     t_colocalise_s = time.time()
     for channel_1  in channels:
-        print(f"Colocalising {channel_1.channel_name} with all other channels.")
+        logger.info(f"Colocalising {channel_1.channel_name} with all other channels.")
+        log(config, "colocalising", channel_1.channel_name)
         temp_colocalised_result = ColocalisationResult.from_channel_file(channel_1)
         for channel_2 in channels:
             if channel_1.channel_name == channel_2.channel_name:
@@ -112,33 +139,31 @@ def process_stack(
                 continue
             temp_colocalised_channel = channel_1.colocalise_with(channel_2, config)
             if temp_colocalised_channel is ValueError:
-                print(f"There seems to be a mismatch of image dimensions. Check all \
+                logger.warning(f"There seems to be a mismatch of image dimensions. Check all \
                     the images in {name} have the same number of stacks. Skipping\
-                        for now.")
+                    for now.")
+                log(config, "colocalising", "Image dimension mismatch!")
                 return None
             temp_colocalised_result.add_colocalised_image(temp_colocalised_channel)
         temp_colocalised_result.calculate_combination_images()
         colocalised_results.append(temp_colocalised_result)
     t_colocalise_e = time.time()
-    print(f"Time for colocalise = {t_colocalise_e-t_colocalise_s}")
+    logger.debug(f"Time for colocalise = {t_colocalise_e-t_colocalise_s}")
     t_output_s = time.time()
-    output_results_csv(colocalised_results, out_dir, config["csv_name"])
+    output_results_csv(colocalised_results, out_dir, config["output_filename"])
     t_output_e = time.time()
-    print(f"Time for output = {t_output_e-t_output_s}")
+    logger.debug(f"Time for output = {t_output_e-t_output_s}")
 
     t_save_s = time.time()
     for result in colocalised_results:
         result.save_images(out_dir)
     t_save_e = time.time()
-    print(f"Time for save = {t_save_e-t_save_s}")
+    logger.debug(f"Time for save = {t_save_e-t_save_s}")
 
-    del channels
-    del colocalised_results
-    n = gc.collect()
-    print("\n\n")
+
 
 def output_results_csv(colocalised_results, out_dir, out_file_name):
-    print("Saving csv.")
+    logger.info("Saving csv.")
     file_path = os.path.join(out_dir, out_file_name)
     if os.path.isfile(file_path):
         pd = read_csv(file_path)

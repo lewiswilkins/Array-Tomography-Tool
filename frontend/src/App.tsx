@@ -34,6 +34,7 @@ import {Alignment} from "./pages/Alignment";
 import {Segment} from "./pages/Segment";
 
 
+
 const drawerWidth = 240;
 
 const useStyles = makeStyles((theme: Theme) =>
