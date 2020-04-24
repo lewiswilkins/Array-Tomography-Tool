@@ -8,12 +8,13 @@ import {
 
   const useStyles = makeStyles(theme => ({
     root: {
-      flexGrow: 1
+      flexGrow: 1,
+      width: '100%',
     },
     paper: {
       maxWidth: '100%',
       margin: `${theme.spacing(1)}px auto`,
-      padding: theme.spacing(2),
+      padding: theme.spacing(3),
     },
     text: {
       textAlign: "left",

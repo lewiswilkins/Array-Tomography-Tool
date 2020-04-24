@@ -32,7 +32,7 @@ def log(config: dict, log_file: str, value):
         Path(f"/tmp/{job_id}/{log_file}.out").write_text(value)
 
 
-def server_run(config: dict):
+def server_run_colocalisation(config: dict):
     in_dir = config["input_dir"]
     out_dir = config["output_dir"]
     _check_dir_exists(in_dir)

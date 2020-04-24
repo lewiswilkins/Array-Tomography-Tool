@@ -21,7 +21,9 @@ import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
 import StepLabel from '@material-ui/core/StepLabel';
 import useInterval from '@use-it/interval';
-
+import {configReducer, channelsReducer} from '../hooks/configReducer';
+import { TextInput, NumericalInput} from '../components/Inputs';
+import { ParameterTable } from '../components/ParameterTable';
 
 // const projectTheme = theme;
 const useStyles = makeStyles(theme => ({
@@ -38,6 +40,9 @@ const useStyles = makeStyles(theme => ({
       display: 'inline-block',
       margin: '0 2px',
       transform: 'scale(0.8)',
+    },
+    stepperContent: {
+        padding: theme.spacing(2),
     },
     title: {
       fontSize: 14,
@@ -57,7 +62,6 @@ const useStyles = makeStyles(theme => ({
         '& .MuiTextField-root': {
             margin: theme.spacing(2),
             width: '25ch'}
-    
     },
     paper: {
         padding: 10,
@@ -87,35 +91,7 @@ const useStyles = makeStyles(theme => ({
   }));
   
 
-const TextInput = (props: any) =>{
-    const classes = useStyles();
-    return(
-        <TextField
-            className={classes.inputs}
-            id="standard-textarea"
-            label={props.label}
-            variant="outlined"
-            onChange={props.onChange}
-            value={props.value}
-        />
-    );
-}
 
-export function NumericalInput(props: any){
-    const classes = useStyles();
-    return(
-        <TextField  
-            className={classes.inputs}
-            id="standard-number"
-            label={props.label}
-            type="number"
-            onChange={props.onChange}
-            inputProps={props.inputProps}
-            variant="outlined"
-            value={props.value}
-        />
-    );
-}
 
 
 export function ColocalisationParameters(props: any) {
@@ -129,7 +105,7 @@ export function ColocalisationParameters(props: any) {
         <form className={classes.inputs} noValidate autoComplete="off">
             
             <NumericalInput  
-                className={classes.textBoxes}   
+                classes={classes} 
                 label="x-y resolution"
                 inputProps={inputProps}
                 onChange={
@@ -145,7 +121,7 @@ export function ColocalisationParameters(props: any) {
                 
             />
             <NumericalInput   
-                className={classes.textBoxes}
+                classes={classes}
                 label="z resolution"
                 inputProps={inputProps}
                 onChange={
@@ -160,7 +136,7 @@ export function ColocalisationParameters(props: any) {
                 value={props.config["z_resolution"]}
             />
             <NumericalInput  
-                className={classes.textBoxes} 
+                classes={classes}
                 label="Min overlap"
                 inputProps={inputProps}
                 onChange={
@@ -175,7 +151,6 @@ export function ColocalisationParameters(props: any) {
                 value={props.config["min_overlap"]}
             />
             <NumericalInput 
-                className={classes.textBoxes}
                 classes={classes}    
                 label="Max distance"
                 inputProps={inputProps}
@@ -232,7 +207,7 @@ const RenderColocalisation = (props: any) => {
     
     return (
         <div>
-            {Object.keys(props.channels).map((item:any, index: any) => (
+            {Object.keys(props.channels).map((item: any, index: any) => (
                 <div key={index}>
                 <FormControl className={props.classes.inputs}>
                     <InputLabel  id="demo-simple-select-label">{item}</InputLabel>
@@ -284,10 +259,11 @@ const createChannelColocalisationObject = (channels: Array<string>, channelIndex
             
             <List>
                 <RenderChannelList 
-                classes={props.classes} 
-                items={props.items}
-                onChange={props.onChange}
-                state={props.state}/>
+                    classes={props.classes} 
+                    items={props.items}
+                    onChange={props.onChange}
+                    state={props.state}
+                />
             </List>
         </div>
     );
@@ -324,7 +300,6 @@ const ColocalisationGetStarted = (props: any) => {
                 </Typography>
         </Grid>
     );
-
 }
 
 const ColocalisationInputs = (props: any) => {
@@ -343,6 +318,7 @@ const ColocalisationInputs = (props: any) => {
                     }
                 }
                 value={props.config["input_dir"]}
+                classes={props.classes}
             />
             <TextInput
                 label="Output directory"
@@ -356,6 +332,7 @@ const ColocalisationInputs = (props: any) => {
                     }
                 }
                 value={props.config["output_dir"]}
+                classes={props.classes}
             />
             <TextInput
                 label="Output filename"
@@ -369,11 +346,13 @@ const ColocalisationInputs = (props: any) => {
                     }
                 }
                 value={props.config["output_filename"]}
+                classes={props.classes}
             />
             <TextInput
                 label="Channels"
                 onChange={props.onChannelChange}
                 value={props.channels}
+                classes={props.classes}
             />
 
         </form>
@@ -385,13 +364,7 @@ const ColocalisationConfirmation = (props: any) => {
     return (
         <div>
             <Typography variant="h4">Is everything correct?</ Typography>
-            <Typography variant="h5">Input directory: {props.config["input_dir"]}</Typography>
-            <Typography variant="h5">Output directory: {props.config["output_dir"]}</Typography>
-            <Typography variant="h5">Output filename: {props.config["output_filename"]}</Typography>
-            <Typography variant="h5">x-y resolution: {props.config["xy_resolution"]}</Typography>
-            <Typography variant="h5">z resolution: {props.config["z_resolution"]}</Typography>
-            <Typography variant="h5">Min overlap: {props.config["min_overlap"]}</Typography>
-            <Typography variant="h5">Max distance: {props.config["max_distance"]}</Typography>
+            <ParameterTable classes={props.classes} config={props.config}/>
         </div>
     );
 }
@@ -469,14 +442,14 @@ function getSteps() {
         if(activeStep==0){
             const date = new Date();
             console.log(date.getTime());
-            dispatch({type: "job_id", value: date.getTime(), cast: ""})
+            dispatch({type: "job_id", value: date.getTime()});
         }
         else if(activeStep==1){
             
             channelsDispatch({channel: "init", coloc: "", value: initialChannelList});
         }
         else if(activeStep==2){
-            dispatch({type: "channels", value: channelsState, cast: ""});
+            dispatch({type: "channels", value: channelsState});
         }
         else if(activeStep==4){
             postConfig();
@@ -509,13 +482,9 @@ function getSteps() {
     console.log(initialConfig);
     
     
-    const reducer = (state: any, action: {type: string, value: any, cast: string}) => {
-        console.log(state);
-        return {...state, [action.type]: action.value};
 
-    };
 
-    const [configState, dispatch] = useReducer(reducer, initialConfig);
+    const [configState, dispatch] = useReducer(configReducer, initialConfig);
 
     console.log(configState);
 
@@ -530,19 +499,7 @@ function getSteps() {
     const initialChannelList = createColocalisationObject(channelList);
     const initialChannelState = {} as any;
     
-    const channelsReducer = (state: any, action: {channel: string, coloc: string,  value: any}) => {
-        if(action.channel === "init"){
-            return action.value;
-        }
-        else {
-            state[action.channel][action.coloc] = action.value;
-            console.log(state);
-            return {...state, [action.channel]:
-                {...state[action.channel], [action.coloc]: action.value}
-            };
-        }
-
-    };
+    
     const [channelsState, channelsDispatch] = useReducer(channelsReducer, initialChannelState);
     console.log(channelsState);
 
@@ -595,7 +552,7 @@ function getSteps() {
             />);
             break;
         case 4: 
-            stepperContent =  (<ColocalisationConfirmation config={configState} />);
+            stepperContent =  (<ColocalisationConfirmation classes={classes} config={configState} />);
             break;
         case 5:
             stepperContent = (<ColocalisationRunning jobId={configState["job_id"]}/>);
@@ -619,12 +576,16 @@ function getSteps() {
         <div>
             {activeStep === steps.length ? (
             <div>
+                <div className={classes.stepperContent}>
                 {stepperContent}
+                </div>
                 <Button onClick={handleReset}>Reset</Button>
             </div>
             ) : (
             <div>
+                <div className={classes.stepperContent}>
                 {stepperContent}
+                </div>
                 <div>
                 <Button
                     disabled={activeStep === 0}

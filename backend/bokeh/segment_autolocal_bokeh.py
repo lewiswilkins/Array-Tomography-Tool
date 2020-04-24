@@ -15,7 +15,7 @@ def reverse_palette(palette):
     return list_palette
 
 file_name = sys.argv[1]
-threshold_method = sys.argv[2]
+
     
 
 RGreens7 = reverse_palette(Greens7)
@@ -24,7 +24,7 @@ ROrRd3 = reverse_palette(OrRd3)
 channel_file = ChannelFile.from_tiff(file_name)
 segmented_image_stack = segment.threshold_stack(
     channel_file, 
-    threshold_method, 
+    "autolocal", 
     window_size=1,
     c=1
 )
@@ -81,7 +81,7 @@ def callback():
     if prev_c != c.value or prev_window_size != window_size.value:
         new_segmented_image_stack = segment.threshold_stack(
         channel_file, 
-        threshold_method, 
+        "autolocal", 
         window_size=window_size.value,
         c=c.value
         )
@@ -97,6 +97,6 @@ for control in controls:
     control.on_change('value', lambda attr, old, new: callback())
 
 
-# callback()
+callback()
 
 curdoc().add_root(row(main_fig, column(controls)))

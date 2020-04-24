@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 
 
-
 def threshold_stack(channel_file: ChannelFile, threshold_method: str, **params):
     """Applies a thresholding method to an image stack and returns the segmented image stack.
         Args:
@@ -66,3 +65,9 @@ def rescale_intensity(channel_file: ChannelFile, lower_percentile=2, upper_perce
         rescaled_image_stack.append(rescaled_image)
     
     return rescaled_image_stack
+
+
+segment_methods = {
+        "autolocal": autolocal_threshold,
+        "fixed": fixed_threshold,
+    }

@@ -71,6 +71,7 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     drawerHeader: {
       display: 'flex',
+      width: '80%',
       alignItems: 'center',
       padding: theme.spacing(0, 1),
       // necessary for content to be below app bar
@@ -85,6 +86,7 @@ const useStyles = makeStyles((theme: Theme) =>
         duration: theme.transitions.duration.leavingScreen,
       }),
       marginLeft: -drawerWidth,
+      
     },
     contentShift: {
       transition: theme.transitions.create('margin', {
