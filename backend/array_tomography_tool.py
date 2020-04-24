@@ -15,7 +15,7 @@ import logging
 
 import yaml
 
-from array_tomography_lib import ChannelFile, colocalisation, ColocalisationResult
+from array_tomography_lib import ChannelFile, colocalisation, ColocalisationResult, segment
 
 
 CACHE_DIR = ".file_cache"
@@ -44,6 +44,20 @@ def server_run_colocalisation(config: dict):
         process_stack(name, config, in_dir, out_dir)
         if i+1 == len(case_stack_names):
             log(config, "images_processed", "Finished!")
+
+def server_run_segment(config: dict):
+    input_dir = config["input_dir"]
+    output_dir = config["output_dir"]
+    file_pattern = config["files"]
+    threshold_method = config["thresholdMethod"]
+    threshold_params = config["thresholdParams"]
+    _check_dir_exists(input_dir)
+    _check_dir_exists(output_dir)
+
+    for i, file_name in enumerate(glob.glob(f"{input_dir}/{file_pattern}")):
+        # log(config, "segment_images_processed", f"{i+1}/{len(case_stack_names)}")
+        channel_file = ChannelFile.from_tiff(file_name)
+        segment.threshold_stack(channel_file, threshold_method, threshold_params)
 
 
 def main():
