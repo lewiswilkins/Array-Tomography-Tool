@@ -3,23 +3,18 @@ channels:
   PSD: 
     ALZ50: overlap
     SY38: overlap
-    Tau: overlap
   SY38: 
     PSD: overlap
     ALZ50: overlap
-    Tau: overlap
   ALZ50:
     PSD: overlap
     SY38: overlap
-    Tau: overlap
-  Tau:
-    PSD: overlap
-    SY38: overlap
-    ALZ50: overlap
+
+
 
 
 # Name of output csv file
-csv_name: 4chanl_test.csv
+output_filename: test.csv
 
 # Resolutions etc.
 xy_resolution: 0.102

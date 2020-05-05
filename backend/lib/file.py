@@ -8,12 +8,11 @@ from cached_property import cached_property
 import numpy as np
 from skimage import io, measure
 
-from array_tomography_lib import colocalisation
+from lib import colocalisation
 
 
-class ChannelFile:
-    """Contains one channel's image stack and associated properties.
-    Image properties are calculated on-demand"""
+class File:
+    """Base file class to handle images"""
 
     def __init__(
         self,
@@ -24,11 +23,7 @@ class ChannelFile:
         self.image = image
         self.name = name
         self.channel_name = channel_name
-        self._labelled_image = None
-        self._objects = None
-        self._labels = None
-        self._centroids = None
-        self._object_coords = None
+        self.output_file_name = None
 
     @classmethod
     def from_tiff(cls, file_path):
@@ -49,11 +44,39 @@ class ChannelFile:
         name = "-".join(file_name.split("-")[:-1])
         return name, channel_name
 
+    def save_to_tiff(self, output_dir, output_file_name=None):
+        if output_file_name is None:
+            output_file_name = self.output_file_name
+        io.imsave(
+            os.path.join(output_dir, output_file_name),
+            self.image, 
+            plugin="tifffile",
+            check_contrast=False
+        )
+
+
+class SegmentedFile(File):
+    """File class to store segmented images"""
+
+    def __init__(
+        self,
+        image: np.ndarray,
+        name: str,
+        channel_name: str
+    ):
+        super().__init__(image, name, channel_name)
+        self.output_file_name = f"{self.name}-{self.channel_name}-segmented.tif"
+        self._labelled_image = None
+        self._objects = None
+        self._labels = None
+        self._centroids = None
+        self._object_coords = None
+
     @cached_property
     def labelled_image(self):
-        self._labelled_image = np.array(measure.label(
-            self.image, connectivity=1
-        )) 
+        self._labelled_image = np.array(
+            measure.label(self.image, connectivity=1)
+            ) 
         return self._labelled_image
 
     @cached_property
@@ -74,16 +97,14 @@ class ChannelFile:
     @cached_property
     def object_coords(self):
         self._object_coords = np.array([ob.coords for ob in self.objects])
-
         return self._object_coords
 
     def colocalise_with(self, other_channel, config):
         colocalised_image, object_list = colocalisation.colocalise(self, other_channel, config)
-        
         if colocalised_image is ValueError:
             return object_list
         
-        colocalisation_channel_file = ColocalisedChannelFile(
+        colocalisation_channel_file = ColocalisedFile(
             image=colocalised_image,
             name=self.name,
             channel_name=self.channel_name,
@@ -93,22 +114,8 @@ class ChannelFile:
 
         return colocalisation_channel_file
 
-    # we need to save the file with a unique name for each image/config combination. to be done with checksum
-    def save_to_pickle(self, file_name):
-        with open(file_name, "wb") as output_pickle:
-            pickle.dump(self, output_pickle)
 
-    @classmethod
-    def load_from_pickle(cls, file_name):
-        with open(file_name, "rb") as input_pickle:
-            self = pickle.load(input_pickle)
-        return self
-
-    def set_colocalisation_types(self, colocalisation_types):
-        self.colocalisation_types = colocalisation_types
-
-
-class ColocalisedChannelFile(ChannelFile):
+class ColocalisedFile(File):
     def __init__(
         self,
         image: np.ndarray,
@@ -122,14 +129,3 @@ class ColocalisedChannelFile(ChannelFile):
         self.object_list = object_list
         self.output_file_name = f"{self.name}-{self.channel_name}{self.colocalised_with}.tif"
         self.image = np.array(self.image, dtype=np.int16)
-    
-    def save_to_tiff(self, out_dir, out_file_name=None):
-        if out_file_name is None:
-            out_file_name = self.output_file_name
-        io.imsave(
-            os.path.join(out_dir, out_file_name),
-            self.image, 
-            plugin="tifffile",
-            check_contrast=False
-        )
-

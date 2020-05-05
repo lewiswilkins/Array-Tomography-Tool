@@ -5,7 +5,7 @@ from matplotlib.pyplot import figure
 from skimage import io, exposure
 from skimage.filters import threshold_local
 
-from array_tomography_lib import ChannelFile
+from lib import File
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 
-def threshold_stack(channel_file: ChannelFile, threshold_method: str, **params):
+def threshold_stack(channel_file: File, threshold_method: str, **params):
     """Applies a thresholding method to an image stack and returns the segmented image stack.
         Args:
             channel_file: The `ChannelFile` containing the image stack to segment
@@ -56,7 +56,7 @@ def fixed_threshold(image, threshold):
     return threshold_image
 
 
-def rescale_intensity(channel_file: ChannelFile, lower_percentile=2, upper_percentile=98):
+def rescale_intensity(channel_file: File, lower_percentile=2, upper_percentile=98):
     image_stack = channel_file.image
     rescaled_image_stack =[]
     for image in image_stack:
