@@ -1,10 +1,11 @@
 import logging
 from pathlib import Path
+from typing import Optional
 
 
 class ATLogger():
     """Extentension of logging to easily log for both back and front end 
-    in one line"""
+    in one line."""
 
     def __init__(self, name: str):
         self.name = name
@@ -23,11 +24,15 @@ class ATLogger():
             self._job_id = self._config["job_id"]
             self._mkdir()
 
-    def log(self, level: str, message: str, name: str = None) -> None:
+    def log(
+        self, level: str, message: str, 
+        name: Optional[str] = None, fe_message: Optional[str] = None
+    ) -> None:
         self._levels[level](message)
         if self._job_id and name:
-            Path(f"/tmp/{self._job_id}/{name}.out").write_text(message)
+            t_message = fe_message if fe_message else message
+            Path(f"/tmp/{self._job_id}/{name}.out").write_text(t_message)
         
-    def _mkdir(self):
+    def _mkdir(self) -> None:
         if not Path(f"/tmp/{self._job_id}").exists():
             Path(f"/tmp/{self._job_id}").mkdir()

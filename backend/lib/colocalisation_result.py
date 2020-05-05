@@ -3,7 +3,7 @@ import itertools
 import functools
 import numpy as np
 
-from array_tomography_lib import ColocalisedChannelFile, colocalisation
+from lib import ColocalisedFile, colocalisation
 
 
 
@@ -32,7 +32,7 @@ class ColocalisationResult:
             original_image=channel_file.image
         )
 
-    def add_colocalised_image(self, colocalised_image: ColocalisedChannelFile):
+    def add_colocalised_image(self, colocalised_image: ColocalisedFile):
         self.colocalised_images.append(colocalised_image)
         # print(f"There are {len(self.colocalised_images)} in the object.")
     
@@ -47,7 +47,7 @@ class ColocalisationResult:
                     label_list=combined_object_list,
                     object_coords=self.original_coords
                 )
-                temp_colocalised_channel_file = ColocalisedChannelFile(
+                temp_colocalised_channel_file = ColocalisedFile(
                     image=combined_image,
                     name=self.name,
                     channel_name=self.channel_name,

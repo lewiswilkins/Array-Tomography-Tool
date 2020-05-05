@@ -8,7 +8,7 @@ from cached_property import cached_property
 import numpy as np
 from skimage import io, measure
 
-from array_tomography_lib import colocalisation
+from lib import colocalisation
 
 
 class File:
