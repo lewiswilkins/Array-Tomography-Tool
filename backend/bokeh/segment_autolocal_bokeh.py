@@ -39,8 +39,8 @@ main_fig = figure(
 )
 
 layer = Slider(start=0, end=len(nominal_image_stack), value=0, step=1, title="z layer")
-window_size = Slider(start=1, end=15, value=1, step=2, title="window size")
-c = Slider(start=1, end=20, value=1, step=1, title="c")
+window_size = Slider(start=1, end=30, value=1, step=2, title="window size")
+c = Slider(start=1, end=30, value=1, step=1, title="c")
 
 prev_layer = 0
 prev_window_size = 1
@@ -99,4 +99,4 @@ for control in controls:
 
 callback()
 
-curdoc().add_root(row(main_fig, column(controls)))
+curdoc().add_root(row(main_fig, column(controls, width=150), height=500, width=750))
