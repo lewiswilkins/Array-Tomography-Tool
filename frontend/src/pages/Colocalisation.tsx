@@ -24,8 +24,9 @@ import useInterval from '@use-it/interval';
 import {configReducer, channelsReducer} from '../hooks/configReducer';
 import { TextInput, NumericalInput} from '../components/Inputs';
 import { ParameterTable } from '../components/ParameterTable';
+import { postConfig, getLog } from '../functions/fetchFunctions';
 
-// const projectTheme = theme;
+
 const useStyles = makeStyles(theme => ({
     root: {
       maxWidth: 800,
@@ -402,21 +403,7 @@ const ColocalisationRunning = (props: any) => {
 }
 
 
-const getLog = async (jobId: string, parameter: string) =>{
-    const log = await fetch(
-        `http://127.0.0.1:5000/colocalisation/${jobId}/${parameter}/`, {
-        method: 'GET',
-        mode: 'cors', 
-        cache: 'no-cache',
-        headers: {
-            'Access-Control-Allow-Origin':'',
-        },
-    });
-    const data = await log.text();
-    console.log(data);
 
-    return data;
-}
 
 function getSteps() {
     return [
@@ -428,10 +415,8 @@ function getSteps() {
         'Running!' ];
     };
     
-      
-     
-      
-    export  function HorizontalLabelPositionBelowStepper() {
+       
+export  function HorizontalLabelPositionBelowStepper() {
     const classes = useStyles();
 
     // Handling steps
@@ -452,7 +437,7 @@ function getSteps() {
             dispatch({type: "channels", value: channelsState});
         }
         else if(activeStep==4){
-            postConfig();
+            postConfig("colocalisation", configState);
         }
         setActiveStep((prevActiveStep) => prevActiveStep + 1);
         
@@ -503,16 +488,7 @@ function getSteps() {
     const [channelsState, channelsDispatch] = useReducer(channelsReducer, initialChannelState);
     console.log(channelsState);
 
-    const postConfig = () => {
-        console.log("POST state");
-        return fetch('http://127.0.0.1:5000/colocalisation/', {
-        method: 'POST',
-        body: JSON.stringify(configState),
-        headers: {
-            'Content-Type': 'application/json'
-            },
-        });
-    }
+    
     
    
 

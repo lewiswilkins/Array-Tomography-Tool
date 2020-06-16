@@ -24,6 +24,7 @@ import Iframe from 'react-iframe';
 import {configReducer} from '../hooks/configReducer';
 import { TextInput, NumericalInput } from '../components/Inputs';
 import { ParameterTable } from '../components/ParameterTable';
+import { postConfig, getLog } from '../functions/fetchFunctions';
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -290,7 +291,7 @@ const SegmentInputs = (props: {classes: any, config: {inputDir: string, outputDi
                     (event: any) => {
                         console.log(event.target.value)
                         props.onConfigChange({
-                            type: "inputDir", 
+                            type: "input_dir", 
                             value: event.target.value
                             });
                     }
@@ -304,7 +305,7 @@ const SegmentInputs = (props: {classes: any, config: {inputDir: string, outputDi
                     (event: any) => {
                         console.log(event.target.value)
                         props.onConfigChange({
-                            type: "outputDir", 
+                            type: "output_dir", 
                             value: event.target.value
                             });
                     }
@@ -323,7 +324,7 @@ const SegmentParameters = (props: {classes: any, config: any, configDispatch: an
   }, []);
 
   let parameterPage;
-  switch(props.config.thresholdMethod){
+  switch(props.config.threshold_method){
     case "autolocal":
       parameterPage = <SegmentAutolocalParameters 
                         classes={props.classes}
@@ -333,7 +334,11 @@ const SegmentParameters = (props: {classes: any, config: any, configDispatch: an
       break;
 
     case "fixed": 
-      parameterPage = <SegmentFixedParameters classes={props.classes}/>;
+      parameterPage = <SegmentFixedParameters 
+                        classes={props.classes}
+                        config={props.parameters}
+                        onChange={props.parametersDispatch}
+                        />;
       break;
 
     default:
@@ -358,10 +363,10 @@ const SegmentParameters = (props: {classes: any, config: any, configDispatch: an
       <Dropdown
         id="threshold"
         text="Threshold Method"
-        value={props.config.thresholdMethod}
+        value={props.config.threshold_method}
         list={thresholdMethodList}
         handleChange={(event: any) =>{
-          props.configDispatch({type: "thresholdMethod", value: event.target.value })}
+          props.configDispatch({type: "threshold_method", value: event.target.value })}
           }
         classes={props.classes}
       />
@@ -377,15 +382,15 @@ const SegmentAutolocalParameters = (props: {classes: any, config: any, onChange:
       <NumericalInput 
         label="C-factor"
         classes={props.classes}
-        onChange={(event: any) => props.onChange({type: "cFactor", value: event.target.value})}
-        value={props.config.hasOwnProperty("cFactor") ?  props.config.cFactor : 0}
+        onChange={(event: any) => props.onChange({type: "c_factor", value: event.target.value})}
+        value={props.config.hasOwnProperty("c_factor") ?  props.config.c_factor : 0}
         inputProps={{step: 0.1,min: 0}}
         />
       <NumericalInput 
         label="Window size"
         classes={props.classes}
-        onChange={(event: any) => props.onChange({type: "windowSize", value: event.target.value})}
-        value={props.config.hasOwnProperty("windowSize") ?  props.config.windowSize : 0}
+        onChange={(event: any) => props.onChange({type: "window_size", value: event.target.value})}
+        value={props.config.hasOwnProperty("window_size") ?  props.config.window_size : 0}
         inputProps={{step: 2,min: 1}}
         />
     </div>
@@ -393,13 +398,16 @@ const SegmentAutolocalParameters = (props: {classes: any, config: any, onChange:
 }
 
 
-const SegmentFixedParameters = (props: {classes: any}) => {
+const SegmentFixedParameters = (props: {classes: any, config: any, onChange: any}) => {
   return (
     <div>
-      {/* <NumericalInput 
-        label="Threshold value"
+      <NumericalInput 
+        label="Threshold"
         classes={props.classes}
-        /> */}
+        onChange={(event: any) => props.onChange({type: "threshold", value: event.target.value})}
+        value={props.config.hasOwnProperty("threshold") ?  props.config.threshold : 0}
+        inputProps={{step: 1,min: 0}}
+        />
    
     </div>
   );
@@ -411,17 +419,27 @@ const SegmentConfirmation = (props: {classes: any, config: any}) => {
     <ParameterTable classes={props.classes} config={props.config}/>
   );
 }
+
+const SegmentRunning = (props: {}) => {
+  return <Typography>Running!</Typography>
+}
+
 const MainStepper = (props: {}) => {
 
   const classes = useStyles();
   // Handling steps
   const [activeStep, setActiveStep] = useState(0);
-  const steps = ['Getting started', 'Inputs and outputs', 'Previsualiser', 'Segment parameters', 'Is everything ok?']
+  const steps = ['Getting started', 'Inputs and outputs', 'Previsualiser', 'Segment parameters', 'Is everything ok?', 'Running']
   
   const handleNext = () => {
       if (activeStep == 3){
-        configDispatch({type: "thresholdParams", value: parameters})
+        const date = new Date();
+        configDispatch({type: "job_id", value: date.getTime()});
+        configDispatch({type: "threshold_params", value: parameters})
       } 
+      else if (activeStep == 4){
+        postConfig("segmentation", configState);
+      }
       setActiveStep((prevActiveStep) => prevActiveStep + 1);  
   };
 
@@ -430,16 +448,19 @@ const MainStepper = (props: {}) => {
   };
   
   const handleReset = () => {
-      setActiveStep(0);
+      parameterDispatch({type: "", value: "RESET"});
+      setActiveStep(3);
+      
   };
 
   // Handling config
   const initialConfig = {
-    inputDir: "",
-    outputDir: "",
-    thresholdMethod: "",
+    job_id: "",
+    input_dir: "",
+    output_dir: "",
+    threshold_method: "",
     files: "",
-    thresholdParams: {},
+    threshold_params: {},
   };
   const [configState, configDispatch] = useReducer(configReducer, initialConfig);
   console.log(configState);
@@ -467,7 +488,7 @@ const MainStepper = (props: {}) => {
 
       case 2: 
         stepperContent = <PreVisualiserWindow 
-                            directory={configState.inputDir}
+                            directory={configState.input_dir}
                           />;
         break;
       
@@ -487,6 +508,10 @@ const MainStepper = (props: {}) => {
                             config={configState}
                           />;
         break;
+      
+      case 5:
+        stepperContent = <SegmentRunning/>
+
 
       default: 
         stepperContent = <SegmentGetStarted/>
@@ -502,12 +527,12 @@ const MainStepper = (props: {}) => {
         ))}
     </Stepper>
     <div >
-        {activeStep === steps.length ? (
+        {activeStep === steps.length -1 ? (
         <div>
             <div className={classes.stepperContent}>
             {stepperContent}
             </div>
-            <Button onClick={handleReset}>Reset</Button>
+            <Button onClick={handleReset}>Run another?</Button>
         </div>
         ) : (
         <div>

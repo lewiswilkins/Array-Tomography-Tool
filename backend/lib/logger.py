@@ -16,7 +16,9 @@ class ATLogger():
             "debug": self._logger.debug,
             "info": self._logger.info,
             "error": self._logger.error,
+            "warning": self._logger.warning
         }
+        logging.basicConfig(level=logging.NOTSET)
 
     def set_config(self, config: dict) -> None:
         self._config = config
@@ -28,7 +30,7 @@ class ATLogger():
         self, level: str, message: str, 
         name: Optional[str] = None, fe_message: Optional[str] = None
     ) -> None:
-        self._levels[level](message)
+        self._levels[level.lower()](message)
         if self._job_id and name:
             t_message = fe_message if fe_message else message
             Path(f"/tmp/{self._job_id}/{name}.out").write_text(t_message)

@@ -1,6 +1,11 @@
 export const configReducer = (state: any, action: {type: string, value: any}) => {
     console.log(state);
-    return {...state, [action.type]: action.value};
+    if (action.value == "RESET"){
+        return {};
+    } 
+    else{
+        return {...state, [action.type]: action.value};
+    } 
 };
 
 

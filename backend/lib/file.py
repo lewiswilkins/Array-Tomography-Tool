@@ -2,7 +2,6 @@ import pickle
 import sys
 from typing import List
 import os
-# import functools
 from cached_property import cached_property
 
 import numpy as np
@@ -45,6 +44,7 @@ class File:
         return name, channel_name
 
     def save_to_tiff(self, output_dir, output_file_name=None):
+        self.image = np.array(self.image, dtype=np.int16)
         if output_file_name is None:
             output_file_name = self.output_file_name
         io.imsave(
@@ -65,19 +65,15 @@ class SegmentedFile(File):
         channel_name: str
     ):
         super().__init__(image, name, channel_name)
-        self.output_file_name = f"{self.name}-{self.channel_name}-segmented.tif"
-        self._labelled_image = None
+        self.output_file_name = f"{self.name}-segmented-{self.channel_name}.tif"
+        self.connectivity = 1
+        self.labelled_image = np.array(
+            measure.label(self.image, connectivity=self.connectivity)
+        )
         self._objects = None
         self._labels = None
         self._centroids = None
         self._object_coords = None
-
-    @cached_property
-    def labelled_image(self):
-        self._labelled_image = np.array(
-            measure.label(self.image, connectivity=1)
-            ) 
-        return self._labelled_image
 
     @cached_property
     def labels(self):
@@ -114,6 +110,24 @@ class SegmentedFile(File):
 
         return colocalisation_channel_file
 
+    def set_connectivity(self, connectivity: int) -> None:
+        self.connectivity = connectivity
+        self.labelled_image
+
+    def save_to_tiff(
+        self, output_dir: str, output_file_name: str = None, 
+        labelled_image: bool = False
+    ) -> None:
+        self.image = np.array(self.image, dtype=np.int16)
+        image_to_save = self.labelled_image if labelled_image else self.image 
+        if output_file_name is None:
+            output_file_name = self.output_file_name
+        io.imsave(
+            os.path.join(output_dir, output_file_name),
+            image_to_save, 
+            plugin="tifffile",
+            check_contrast=False
+        )
 
 class ColocalisedFile(File):
     def __init__(

@@ -22,11 +22,8 @@ ROrRd3 = reverse_palette(OrRd3)
 channel_file = File.from_tiff(file_name)
 segmented_image_stack = segmentation.segment_stack(
     channel_file, 
-    "autolocal", 
-    window_size=1,
-    c=1,
-    min_vox_size=3,
-    min_vox_size=99999999
+    "fixed", 
+    threshold=channel_file.image.mean()
 )
 segmented_image_stack = segmented_image_stack.labelled_image > 1
 
@@ -38,20 +35,11 @@ main_fig = figure(
     title="Segmentation",
     sizing_mode="scale_both"
 )
-
+print((nominal_image_stack.max()))
 layer = Slider(start=0, end=len(nominal_image_stack), value=0, step=1, title="z layer")
-window_size = Slider(start=1, end=30, value=1, step=2, title="window size")
-c = Slider(start=1, end=30, value=1, step=1, title="c")
-min_voxel_size = Slider(start=0, end=50, value=1, step=1, title="min voxel size")
-max_voxel_size = Slider(start=0, end=9999999999, value=9999999999, step=1, title="min voxel size")
+threshold = Slider(start=0, end=nominal_image_stack.max(), value=nominal_image_stack.mean(), step=1, title="threshold")
 
-prev_layer = 0
-prev_window_size = 1
-prev_c = 1
-
-prev_min_voxel_size = 1
-prev_max_voxel_size = 9999999999
-
+prev_threshold = nominal_image_stack.mean()
 
 
 segmented_image_source = ColumnDataSource(data=dict(image=[segmented_image_stack[0]]))
@@ -82,15 +70,12 @@ main_fig.image(
 
 def callback():
     print("updating")
-    print(prev_c,  c.value, prev_window_size,layer.value)
-    if prev_c != c.value or prev_window_size != window_size.value:
+
+    if prev_threshold != threshold.value:
         new_segmented_image_stack = segmentation.segment_stack(
         channel_file, 
-        "autolocal", 
-        window_size=window_size.value,
-        c=c.value,
-        min_vox_size=min_voxel_size.value,
-        max_vox_size=max_voxel_size.value
+        "fixed", 
+        threshold=threshold.value
         )
         new_segmented_image_stack = new_segmented_image_stack.labelled_image > 1
         segmented_image_source.data = dict(image=[new_segmented_image_stack[layer.value]])
@@ -100,7 +85,7 @@ def callback():
     
 
 
-controls = [layer, window_size, c, min_voxel_size, max_voxel_size]
+controls = [layer, threshold]
 for control in controls:
     control.on_change('value', lambda attr, old, new: callback())
 

@@ -9,7 +9,7 @@ import yaml
 from pandas import DataFrame, read_csv
 
 from lib import (ATLogger, ColocalisationResult, SegmentedFile, colocalisation,
-                 segment)
+                 utils)
 
 logger = ATLogger(__name__)
 
@@ -38,9 +38,9 @@ def run_colocalise():
     in_dir = args.input
     out_dir = args.output
     config_path = args.config
-    _check_dir_exists(in_dir)
-    _check_dir_exists(out_dir)
-    config = _parse_config(config_path)
+    utils.check_dir_exists(in_dir)
+    utils.check_dir_exists(out_dir)
+    config = utils.parse_config(config_path)
     logger.set_config(config)
     
     start = time.time()
@@ -53,8 +53,8 @@ def run_colocalise():
 def server_run_colocalisation(config: dict):
     in_dir = config["input_dir"]
     out_dir = config["output_dir"]
-    _check_dir_exists(in_dir)
-    _check_dir_exists(out_dir)
+    utils.check_dir_exists(in_dir)
+    utils.check_dir_exists(out_dir)
 
     case_stack_names = get_names(in_dir)
     for i,name in enumerate(case_stack_names):
@@ -176,19 +176,6 @@ def get_channels(name, channels, dir_path):
     channels = [f"{dir_path}/{name}-{channel}.tif" for channel in channels]
     return channels
 
-def _check_dir_exists(dir):
-    if not os.path.isdir(dir):
-        logger.error(f"{dir} does not exist. Check your paths are all correct!")
-        exit()
-
-def _parse_config(config_path: str) -> dict:
-    try:
-        with open(config_path) as f:
-            config_dict = yaml.load(f, Loader=yaml.Loader)
-        return config_dict
-    except FileNotFoundError:
-        logger.log(level="error", message="Config file does not exist! Check the path/name are correct.")
-        exit()
 
 if __name__ == "__main__":
     run_colocalise()

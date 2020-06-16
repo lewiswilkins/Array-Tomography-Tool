@@ -10,7 +10,7 @@ from bokeh.embed import server_document
 from flask import Flask, request, session
 from flask_cors import CORS, cross_origin
 
-from array_tomography_lib import segment
+from lib import segmentation
 
 app = Flask(__name__)
 
@@ -29,7 +29,7 @@ def run_colocalisation():
     if request.method == "POST":
         config = request.json
         subprocess.run(
-            ["./array_tomography_api/colocalisation_api.py", json.dumps(config)]
+            ["../api/colocalisation_api.py", json.dumps(config)]
         )
         
         return config
@@ -49,7 +49,7 @@ def run_segment_gui(threshold_method: str):
 
     threshold_method_gui = {
         "autolocal": "segment_autolocal_bokeh",
-        "fixed": "segment_fixed_gui"
+        "fixed": "segment_fixed_bokeh"
     }
     file_name = request.args.get("fileName")
     app.running_bokeh_process = subprocess.Popen(
@@ -58,7 +58,7 @@ def run_segment_gui(threshold_method: str):
             "serve",  
             "--allow-websocket-origin=*",
             "--log-level=debug", 
-            f"bokeh/{threshold_method_gui[threshold_method]}.py",
+            f"../bokeh/{threshold_method_gui[threshold_method]}.py",
             "--args",
             f"{file_name}"
             ]
@@ -71,12 +71,13 @@ def run_segment_gui(threshold_method: str):
     return obj
 
 
-@app.route('/segment/')
-def run_segment(threshold_method: str):
+@app.route('/segmentation/', methods=["POST", "GET"])
+def run_segment():
+    print("oioio")
     config = request.json
     if request.method == "POST":
         subprocess.Popen(
-            ["./array_tomography_api/segment_api.py", json.dumps(config)]
+            ["../api/segment_api.py", json.dumps(config)]
         )
 
         return config
@@ -93,7 +94,7 @@ def get_segment_file_list():
 
 @app.route('/segment/list_threshold_methods/')
 def get_segment_threshold_methods():
-    threshold_methods = {"threshold_methods": list(segment.segment_methods.keys())}
+    threshold_methods = {"threshold_methods": list(segmentation.segment_methods.keys())}
 
     return json.dumps(threshold_methods)
 

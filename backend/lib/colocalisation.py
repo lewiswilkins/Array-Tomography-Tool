@@ -7,6 +7,8 @@ import numpy as np
 from numba import njit
 from skimage import measure
 
+from lib import utils
+
 
 def colocalise_pairwise(channels, config):
     """Computes the colocalisation for each pair of channels, according to the method.
@@ -154,12 +156,8 @@ def get_colocalised_image(original_image, label_list, object_coords):
     colocalised_image.fill(0)
     for label in label_list: 
         coords = object_coords[label-1]
-        for pixel in coords:
-            if len(pixel) == 2:
-                colocalised_image[pixel[0]][pixel[1]] = 1
-            elif len(pixel) == 3:
-                colocalised_image[pixel[0]][pixel[1]][pixel[2]] = 1
-    
+        utils.set_pixels(colocalised_image, coords, 1)
+
     return colocalised_image
     
 def _get_overlap_mask(image_1, image_2):
