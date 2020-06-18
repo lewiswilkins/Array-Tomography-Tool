@@ -25,6 +25,7 @@ import {configReducer} from '../hooks/configReducer';
 import { TextInput, NumericalInput } from '../components/Inputs';
 import { ParameterTable } from '../components/ParameterTable';
 import { postConfig, getLog } from '../functions/fetchFunctions';
+import { LogDisplay } from '../components/LogDisplay';
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -414,14 +415,17 @@ const SegmentFixedParameters = (props: {classes: any, config: any, onChange: any
 }
 
 
-const SegmentConfirmation = (props: {classes: any, config: any}) => {
+const SegmentConfirmation = (props: {classes: any, config: any, names: any}) => {
   return (
-    <ParameterTable classes={props.classes} config={props.config}/>
+    <ParameterTable classes={props.classes} config={props.config} names={props.names}/>
   );
 }
 
-const SegmentRunning = (props: {}) => {
-  return <Typography>Running!</Typography>
+
+const SegmentRunning = (props: {config: any}) => {
+  return (
+    <LogDisplay jobId={props.config.job_id} parameter="segmentation"/>
+  );
 }
 
 const MainStepper = (props: {}) => {
@@ -462,6 +466,16 @@ const MainStepper = (props: {}) => {
     files: "",
     threshold_params: {},
   };
+
+  const configNames = {
+    job_id: "Job ID",
+    input_dir: "Input directory",
+    output_dir: "Output directory",
+    threshold_method: "Threshold method",
+    files: "Files",
+    threshold_params: "Threshold parameters",
+
+  }
   const [configState, configDispatch] = useReducer(configReducer, initialConfig);
   console.log(configState);
 
@@ -506,12 +520,13 @@ const MainStepper = (props: {}) => {
         stepperContent = <SegmentConfirmation 
                             classes={classes}
                             config={configState}
+                            names={configNames}
                           />;
         break;
       
       case 5:
-        stepperContent = <SegmentRunning/>
-
+        stepperContent = <SegmentRunning config={configState}/>
+      break;
 
       default: 
         stepperContent = <SegmentGetStarted/>
@@ -556,7 +571,6 @@ const MainStepper = (props: {}) => {
     </div>
     </div>
   );
-
 
 }
 

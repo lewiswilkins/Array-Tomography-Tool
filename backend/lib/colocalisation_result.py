@@ -1,11 +1,13 @@
-import pickle
-import itertools
 import functools
+import itertools
+import logging
+import pickle
+
 import numpy as np
 
 from lib import ColocalisedFile, colocalisation
 
-
+logger = logging.getLogger(__name__)
 
 class ColocalisationResult:
     """The colocalisations for one image stack. Contains a list of all colocalisation
@@ -34,7 +36,6 @@ class ColocalisationResult:
 
     def add_colocalised_image(self, colocalised_image: ColocalisedFile):
         self.colocalised_images.append(colocalised_image)
-        # print(f"There are {len(self.colocalised_images)} in the object.")
     
     def calculate_combination_images(self):
         temp_combination_images = []
@@ -58,7 +59,7 @@ class ColocalisationResult:
         self.colocalised_images += temp_combination_images
     
     def save_images(self, out_dir):
-        print("Saving images.")
+        logger.info(f"Saving {self.channel_name} images.")
         for image in self.colocalised_images:
             if image.image is not None:
                 image.save_to_tiff(out_dir)
@@ -89,5 +90,3 @@ class ColocalisationResult:
             else:
                 del combined_dict[key]
         return combined_dict
-
-    

@@ -5,9 +5,9 @@ from matplotlib.pyplot import figure
 from skimage.filters import threshold_local
 from skimage import io
 
-from lib import File, SegmentedFile, ATLogger, utils
+from lib import File, SegmentedFile, utils
 
-logger = ATLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def segment_stack(
@@ -31,9 +31,8 @@ def segment_stack(
     for image in image_stack:
         threshold_function = segment_methods.get(threshold_method, None)
         if not threshold_function:
-            logger.log(
-                level="error", 
-                message=f"{threshold_method} is not a valid method! Please use another."
+            logger.error(
+                f"{threshold_method} is not a valid method! Please use another."
                 )
         segmented_image = threshold_function(image=image, **params)
         segmented_stack.append(segmented_image)

@@ -25,6 +25,7 @@ import {configReducer, channelsReducer} from '../hooks/configReducer';
 import { TextInput, NumericalInput} from '../components/Inputs';
 import { ParameterTable } from '../components/ParameterTable';
 import { postConfig, getLog } from '../functions/fetchFunctions';
+import { LogDisplay } from '../components/LogDisplay';
 
 
 const useStyles = makeStyles(theme => ({
@@ -365,41 +366,45 @@ const ColocalisationConfirmation = (props: any) => {
     return (
         <div>
             <Typography variant="h4">Is everything correct?</ Typography>
-            <ParameterTable classes={props.classes} config={props.config}/>
+            <ParameterTable classes={props.classes} config={props.config} names={props.names}/>
         </div>
     );
 }
 
 const ColocalisationRunning = (props: any) => {
-    console.log(props.jobId)
-    const [nImagesProcessed, setNImagesProcessed] = React.useState();
-    const [caseName, setCaseName] = React.useState();
-    const [colocalising, setColocalising] = React.useState();
+    // console.log(props.jobId)
+    // const [nImagesProcessed, setNImagesProcessed] = React.useState();
+    // const [caseName, setCaseName] = React.useState();
+    // const [colocalising, setColocalising] = React.useState();
 
-    useInterval(() => {
-        getLog(props.jobId, "images_processed").then(setNImagesProcessed);
-        getLog(props.jobId, "case_name").then(setCaseName);
-        getLog(props.jobId, "colocalising").then(setColocalising);
-    }, 1000);
+    // useInterval(() => {
+    //     getLog(props.jobId, "images_processed").then(setNImagesProcessed);
+    //     getLog(props.jobId, "case_name").then(setCaseName);
+    //     getLog(props.jobId, "colocalising").then(setColocalising);
+    // }, 1000);
 
-    let nImages;
-    if(nImagesProcessed == "Finished!"){
-        nImages = <Typography variant="h5">{nImagesProcessed}</Typography>
-    }
-    else{
-        nImages = <Typography variant="h5">Processing image {nImagesProcessed}</Typography>
-    }
+    // let nImages;
+    // if(nImagesProcessed == "Finished!"){
+    //     nImages = <Typography variant="h5">{nImagesProcessed}</Typography>
+    // }
+    // else{
+    //     nImages = <Typography variant="h5">Processing image {nImagesProcessed}</Typography>
+    // }
 
 
     
+    // return (
+    //     <div>
+    //         <Typography variant="h5">Your job has been submitted!</Typography>
+    //         {nImages}
+    //         <Typography variant="h5">{caseName}</Typography>
+    //         <Typography variant="h5">{colocalising}</Typography>
+    //     </div>
+    // );
+
     return (
-        <div>
-            <Typography variant="h5">Your job has been submitted!</Typography>
-            {nImages}
-            <Typography variant="h5">{caseName}</Typography>
-            <Typography variant="h5">{colocalising}</Typography>
-        </div>
-    );
+        <LogDisplay jobId={props.jobId} parameter="colocalisation"/>
+    )
 }
 
 
@@ -430,7 +435,6 @@ export  function HorizontalLabelPositionBelowStepper() {
             dispatch({type: "job_id", value: date.getTime()});
         }
         else if(activeStep==1){
-            
             channelsDispatch({channel: "init", coloc: "", value: initialChannelList});
         }
         else if(activeStep==2){
@@ -464,6 +468,18 @@ export  function HorizontalLabelPositionBelowStepper() {
         min_overlap: null,
         max_distance: null
     }; 
+    const configNames = {
+        job_id: "Job ID",
+        input_dir: "Input directory",
+        output_dir: "Output directory",
+        output_filename: "Output filename",
+        channels: "Channels",
+        xy_resolution: "x-y resolution",
+        z_resolution: "z resolution",
+        min_overlap: "Minimum overlap",
+        max_distance: "Maximum distance"
+    }; 
+
     console.log(initialConfig);
     
     
@@ -528,7 +544,7 @@ export  function HorizontalLabelPositionBelowStepper() {
             />);
             break;
         case 4: 
-            stepperContent =  (<ColocalisationConfirmation classes={classes} config={configState} />);
+            stepperContent =  (<ColocalisationConfirmation classes={classes} config={configState} names={configNames}/>);
             break;
         case 5:
             stepperContent = (<ColocalisationRunning jobId={configState["job_id"]}/>);

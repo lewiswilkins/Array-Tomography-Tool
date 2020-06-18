@@ -24,9 +24,9 @@ segmented_image_stack = segmentation.segment_stack(
     channel_file, 
     "autolocal", 
     window_size=1,
-    c=1,
+    c_factor=1,
     min_vox_size=3,
-    min_vox_size=99999999
+    max_vox_size=9999
 )
 segmented_image_stack = segmented_image_stack.labelled_image > 1
 
@@ -43,14 +43,14 @@ layer = Slider(start=0, end=len(nominal_image_stack), value=0, step=1, title="z 
 window_size = Slider(start=1, end=30, value=1, step=2, title="window size")
 c = Slider(start=1, end=30, value=1, step=1, title="c")
 min_voxel_size = Slider(start=0, end=50, value=1, step=1, title="min voxel size")
-max_voxel_size = Slider(start=0, end=9999999999, value=9999999999, step=1, title="min voxel size")
+max_voxel_size = Slider(start=0, end=9999, value=9999, step=1, title="min voxel size")
 
 prev_layer = 0
 prev_window_size = 1
 prev_c = 1
 
 prev_min_voxel_size = 1
-prev_max_voxel_size = 9999999999
+prev_max_voxel_size = 9999
 
 
 
@@ -88,7 +88,7 @@ def callback():
         channel_file, 
         "autolocal", 
         window_size=window_size.value,
-        c=c.value,
+        c_factor=c.value,
         min_vox_size=min_voxel_size.value,
         max_vox_size=max_voxel_size.value
         )

@@ -1,14 +1,15 @@
 import glob
 import os
+import logging
 
 import yaml
 
-from lib import ATLogger, File, segmentation, utils
+from lib import File, segmentation, utils
 
-logger = ATLogger(__name__)
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format='%(name)s:%(levelname)s: %(message)s')
 
 def server_run_segment(config: dict):
-    logger.set_config(config)
     input_dir = config["input_dir"]
     output_dir = config["output_dir"]
     file_pattern = config["files"]
@@ -19,10 +20,9 @@ def server_run_segment(config: dict):
     _save_config(config)
 
     files_to_segment = glob.glob(f"{input_dir}/{file_pattern}")
-    print(f"{files_to_segment}")
-    print(threshold_params)
+    logger.info(f"{files_to_segment}")
     for i, file_name in enumerate(files_to_segment):
-        logger.log("info", f"{i+1}/{len(files_to_segment)}", "segment")
+        logger.info(f"{i+1}/{len(files_to_segment)}")
         channel_file = File.from_tiff(file_name)
         segmented_file = segmentation.segment_stack(channel_file, threshold_method, 3, 90000, **threshold_params)
         segmented_file.save_to_tiff(output_dir)

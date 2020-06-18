@@ -104,19 +104,22 @@ const useStyles = makeStyles((theme: Theme) =>
 export const theme = createMuiTheme({
   palette: {
     primary: {
-      light: '#82e9de',
-      main: '#4db6ac',
-      dark: '#82ada9',
+      light: '#3c5c8d',
+      main: '#00335f',
+      dark: '#000b35',
       contrastText: '#fff',
     },
     secondary: {
-      light: '#819ca9',
-      main: '#546e7a',
-      dark: '#29434e',
+      light: '#fa4e6f',
+      main: '#c10044',
+      dark: '#89001e',
       contrastText: '#000',
     },
   },
   spacing: 8,
+  typography: {
+    // fontFamily: '"Comic Neue"',
+  },
 
 });
 

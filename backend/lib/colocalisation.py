@@ -2,12 +2,16 @@ import itertools
 import time
 from math import sqrt
 from typing import List
+import logging
 
 import numpy as np
 from numba import njit
 from skimage import measure
 
 from lib import utils
+
+logger = logging.getLogger(__name__)
+
 
 
 def colocalise_pairwise(channels, config):
@@ -17,7 +21,6 @@ def colocalise_pairwise(channels, config):
             config: a dict whose keys are (channel_1, channel_2) tuples and whose values are the
                     method of colocalisation to perform, either 'distance' or 'overlap'
        Returns: a dict of (channel_1, channel_2) -> ColocolisationResult"""
-
     results = {}
     for channel_1, channel_2 in itertools.product(channels, repeat=2):
         if channel_1 == channel_2:
@@ -43,12 +46,12 @@ def colocalise(channel_1, channel_2, config):
     try:
         method = config["channels"][channel_1.channel_name][channel_2.channel_name]
     except KeyError as err:
-        print(f"Cannot get method for {channel_2.channel_name}. Check your config,"\
-    f" you probably havent set a method for {channel_2.channel_name}.")
+        logger.error(f"Cannot get method for {channel_2.channel_name}. Check your config,\
+        you probably havent set a method for {channel_2.channel_name}.")
         exit()
-    print(f"Colocalising {channel_1.channel_name} with {channel_2.channel_name} based on {method}.")
-    print(f"{len(channel_1.objects)} objects in {channel_1_name}")
-    print(f"{len(channel_2.objects)} objects in {channel_2_name}\n")
+    logger.info(f"Colocalising {channel_1.channel_name} with {channel_2.channel_name} based on {method}.")
+    logger.info(f"{len(channel_1.objects)} objects in {channel_1_name}")
+    logger.info(f"{len(channel_2.objects)} objects in {channel_2_name}")
     if method.lower() == "distance":
         xy_resolution = config["xy_resolution"]
         z_resolution = config["z_resolution"]
@@ -90,9 +93,8 @@ def _compute_distance(
         channel_1.image, min_distances, channel_1.object_coords
         )
 
-    print(f"{channel_1.channel_name} and {channel_2.channel_name}: ")
-    print(f"{len(channel_1_centroids)} objects in channel 1")
-    print(f"Found {len(min_distances)} objects within {max_distance}\n")
+    logger.info(f"{channel_1.channel_name} and {channel_2.channel_name}: ")
+    logger.info(f"Found {len(min_distances)} objects within {max_distance}\n")
 
     return colocalised_image, min_distances
 
@@ -141,13 +143,13 @@ def _compute_overlap(channel_1, channel_2, min_overlap=0.25):
     colocalised_image = get_colocalised_image(
         channel_1_image, overlaps, channel_1.object_coords
         )
-    print(f"{channel_1.channel_name} and {channel_2.channel_name}: ")
-    print(f"{len(channel_1.objects)} objects in channel 1")
-    print(f"Found {len(overlaps)} overlapping objects")
+    logger.info(f"{channel_1.channel_name} and {channel_2.channel_name}: ")
+    logger.info(f"{len(channel_1.objects)} objects in channel 1")
+    logger.info(f"Found {len(overlaps)} overlapping objects")
     if len(overlaps) > 0:
-        print(f"mean overlap is {sum(overlaps)/len(overlaps)}\n")
+        logger.info(f"mean overlap is {sum(overlaps)/len(overlaps)}\n")
     else:
-        print("No overlaps found!")
+        logger.info("No overlaps found!")
     return colocalised_image, overlaps
 
 
@@ -164,5 +166,5 @@ def _get_overlap_mask(image_1, image_2):
     try:
         return np.logical_and(image_1, image_2)
     except ValueError as err:
-        print("Images do not have the same dimensions. Please check and retry.")
+        logger.error("Images do not have the same dimensions. Please check and retry.")
         return err

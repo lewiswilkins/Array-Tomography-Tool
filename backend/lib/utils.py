@@ -1,16 +1,22 @@
+import logging
 import os
 
 import numpy as np
 import yaml
 from numba import njit
+from pathlib import Path
 
-from lib import logger
+logger = logging.getLogger(__name__)
 
-
-def check_dir_exists(dir):
-    if not os.path.isdir(dir):
-        logger.error(f"{dir} does not exist. Check your paths are all correct!")
+def check_dir_exists(directory: str, logger=False):
+    if not os.path.isdir(directory):
+        if logger:
+            logger.error(f"{directory} does not exist. Check your paths are all correct!")
         exit()
+
+def mkdir(path) -> None:
+    if not Path(path).exists():
+        Path(path).mkdir()
 
 def parse_config(config_path: str) -> dict:
     try:
@@ -18,7 +24,7 @@ def parse_config(config_path: str) -> dict:
             config_dict = yaml.load(f, Loader=yaml.Loader)
         return config_dict
     except FileNotFoundError:
-        logger.log(level="error", message="Config file does not exist! Check the path/name are correct.")
+        logger.error("Config file does not exist! Check the path/name are correct.")
         exit()
 
 @njit(cache=True, fastmath=True)

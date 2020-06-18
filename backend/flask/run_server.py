@@ -4,13 +4,14 @@ import pathlib
 import subprocess
 import time
 from glob import glob
+from pathlib import Path
 
 from bokeh.client import pull_session
 from bokeh.embed import server_document
 from flask import Flask, request, session
 from flask_cors import CORS, cross_origin
 
-from lib import segmentation
+from lib import segmentation, utils
 
 app = Flask(__name__)
 
@@ -21,6 +22,7 @@ def get_log(job_id: str, parameter: str) -> str:
         return pathlib.Path(f"/tmp/{job_id}/{parameter}.out").read_text()
         
     except FileNotFoundError:
+        print("no filesssss")
         return "..."
 
 
@@ -28,9 +30,12 @@ def get_log(job_id: str, parameter: str) -> str:
 def run_colocalisation():
     if request.method == "POST":
         config = request.json
-        subprocess.run(
-            ["../api/colocalisation_api.py", json.dumps(config)]
-        )
+        utils.mkdir(f"/tmp/{config['job_id']}/")
+        with open(f"/tmp/{config['job_id']}/colocalisation.out", "w") as log:
+            subprocess.Popen(
+                ["../api/colocalisation_api.py", json.dumps(config)],
+                stdout=log, stderr=log
+            )
         
         return config
 
@@ -73,12 +78,15 @@ def run_segment_gui(threshold_method: str):
 
 @app.route('/segmentation/', methods=["POST", "GET"])
 def run_segment():
-    print("oioio")
     config = request.json
     if request.method == "POST":
-        subprocess.Popen(
-            ["../api/segment_api.py", json.dumps(config)]
-        )
+        utils.mkdir(f"/tmp/{config['job_id']}/")
+        print(config['job_id'])
+        with open(f"/tmp/{config['job_id']}/segmentation.out", "w") as log:
+            subprocess.Popen(
+                ["../api/segment_api.py", json.dumps(config), ],
+                stdout=log, stderr=log
+            )
 
         return config
 
@@ -98,7 +106,20 @@ def get_segment_threshold_methods():
 
     return json.dumps(threshold_methods)
 
-
+@app.route('/alignment/', methods=["POST", "GET"])
+def run_alignment():
+    if request.method == "POST":
+        config = request.json
+        t_message = """lots 
+        of
+        words
+        on 
+        different
+        lines"""
+        Path(f"/tmp/{config['job_id']}/").mkdir()
+        Path(f"/tmp/{config['job_id']}/test.out").write_text(t_message)
+        
+        return config
 if __name__ == '__main__':
     CORS(app, support_credentials=True)
     app.running_bokeh_process = None

@@ -11,7 +11,7 @@ import {
   } from "@material-ui/core";
 
 
-export const ParameterTable = (props: {classes: any,  config: any}) => {
+export const ParameterTable = (props: {classes: any,  config: any, names: any}) => {
     const flatConfig = flattenConfig(props.config)
     return (
         <TableContainer component={Paper}>
@@ -25,7 +25,7 @@ export const ParameterTable = (props: {classes: any,  config: any}) => {
                 <TableBody>
                     {Object.keys(flatConfig).map((key: string) => (
                         <TableRow>
-                        <TableCell component="th" scope="row">{key}</TableCell>
+                        <TableCell component="th" scope="row">{props.names[key]}</TableCell>
                         <TableCell>{flatConfig[key]}</TableCell>
                         </TableRow>
                     ))}
@@ -40,8 +40,13 @@ const flattenConfig = (config: any) => {
     const flatConfig = {} as any;
     for(const [key, value] of Object.entries(config)){
         if (typeof value === "object"){
-            const innerConfig = flattenConfig(value);
-            Object.assign(flatConfig, innerConfig);
+            if (value instanceof Array){
+                flatConfig[key] = value.join(" ");
+            }
+            else{
+                const innerConfig = flattenConfig(value);
+                Object.assign(flatConfig, innerConfig);
+            }
         }
         else {
             flatConfig[key] = value;
