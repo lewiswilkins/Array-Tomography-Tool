@@ -1,9 +1,0 @@
-PSD: 
-  ALZ50: overlap
-  SY38: distance
-SY38: 
-  PSD: distance
-  ALZ50: overlap
-ALZ50:
-  PSD: overlap
-  SY38: overlap
