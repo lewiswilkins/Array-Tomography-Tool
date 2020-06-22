@@ -3,9 +3,8 @@ FROM nikolaik/python-nodejs:python3.7-nodejs14
 
 WORKDIR /ArrayTomographyTool
 
-COPY backend/requirements.txt . 
 #backend setup
-
+COPY backend/requirements.txt . 
 RUN pip install --trusted-host pypi.python.org -r requirements.txt
 ENV PYTHONPATH="$PYTHONPATH:/ArrayTomographyTool/backend"
 
