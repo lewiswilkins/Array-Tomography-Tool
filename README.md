@@ -5,7 +5,7 @@
 The easiest method to running the tool is to use Docker. First you will require
 Docker installed on your computer - go to
 https://www.docker.com/products/docker-desktop to download and install. There
-are now two available versions of the tool. One which runs from the command line
+are now two versions of the tool available. One which runs from the command line
 and the other now has a full browser based GUI. The instructions to run both are
 below
 
