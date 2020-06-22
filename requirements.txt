@@ -3,3 +3,9 @@ numpy
 progressbar2
 pyyaml
 scikit-image
+pandas
+cached-property
+pywebview
+flask
+flask_cors
+opencv-contrib-python

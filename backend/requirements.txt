@@ -8,4 +8,5 @@ cached-property
 pywebview
 flask
 flask_cors
+bokeh
 opencv-contrib-python

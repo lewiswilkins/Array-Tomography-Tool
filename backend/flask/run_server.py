@@ -91,7 +91,6 @@ def run_segment():
         return config
 
 
-
 @app.route('/segment/list_files/')
 def get_segment_file_list():
     file_path = request.args.get('directory')
@@ -123,4 +122,4 @@ def run_alignment():
 if __name__ == '__main__':
     CORS(app, support_credentials=True)
     app.running_bokeh_process = None
-    app.run()
+    app.run(host='0.0.0.0')
