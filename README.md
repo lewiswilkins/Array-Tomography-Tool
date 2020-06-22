@@ -1,13 +1,44 @@
 # Array Tomography Tool
 ![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/lewiswilkins/array_tomography_tool)
-## Running Array Tomography Tool
+## Running Array Tomography Tool 
 
 The easiest method to running the tool is to use Docker. First you will require
 Docker installed on your computer - go to
-https://www.docker.com/products/docker-desktop to download and install.
+https://www.docker.com/products/docker-desktop to download and install. There
+are now two available versions of the tool. One which runs from the command line
+and the other now has a full browser based GUI. The instructions to run both are
+below
 
-Then you need to get the Docker image for the tool. Go to your terminal then
+### Running the GUI
+
+First, the Docker image for the tool needs to be pulled. Go to your terminal and
 paste in the following command
+
+
+`docker pull lewiswilkins/array_tomography_tool:v1.0.0-alpha`
+
+This will take a few mins to download, the image is around 1GB (hope to slim this down in
+the future). Once downloaded run the following command:
+
+`docker run -it -d -v /path/to/files/:/mnt/files/:delegated -p 3000:30000 -p 5000:5000 lewiswilkins/array_tomography_tool:v1.0.0-alpha`
+
+Then, open your web browser (this is tested in Safari and Chrome so far) and
+navigate to `localhost:3000`. This may take a few seconds to load while the
+services are getting up and running in the Docker container. You should then see
+the welcome screen! 
+
+Instructions on how to each module will be included on their respective pages.
+For now it should all be fairly self explanatory. One thing to bear in mind -
+when prompted for a path to an input or output directory, always prefix your
+path with `/mnt/files/`. So, for example, if you wanted to navigate to a file
+called `yourFile.txt` which is in `yourDir`, the full path would be
+`/mnt/files/yourDir/yourFile.txt`.
+
+
+### Running from the command line
+
+First, the Docker image for the tool needs to be pulled. Go to your terminal and
+paste in the following command:
 
 
 `docker pull lewiswilkins/array_tomography_tool:v0.2.5`
@@ -34,40 +65,3 @@ over. Another called `output` which will store the output images and numbers.
 You should also put your config file in this directory.
 
 
-## Notes
-
-Design around the ChannelFile class, which contains derived properties about the channel,
-for example number of objects, object areas, colocalised objects etc.
-In a similar way to measure.regionprops, we can use the property decorator and caching to
-compute derived properties when they're first needed, caching the results to file so that
-when they're needed again they're not recomputed.
-
-We should cache. The colocalisation may be re run with different max distance or
-min overlap parameters.
-
-The rest of the program then just instantiates the ChannelFile objects, and gets whichever
-properties it needs at the point at which it wants to use them.
-
-## Workflow
-
-`array_tomography_tool` inputs:
-- `--input` the directory with the input files 
-- `--output` the output directory
-- `--config` the `.yaml` config file containing the colocalisation parameters
-
-The tool runs over a directory of images which contains images from different
-cases. For each case there will also be a number of stacks.
-Then for each stack there are *N* channels. The colocalisation between each of
-the *N* channels is calculated for each unique case and stack combination.
-
-Each unique case-stack combination is looped over and the files for each channel
-are preprocessed. If this is the first time the files have been used, a cache is
-made. Otherwise the cache will be loaded to save processing time. (Is this still
-useful if we are calling the objects at run time?)
-
-
-### Colocalisation:
-In each ChannelFile for each object, label which channels the object overlaps with and by how much.
-
-to produce a colocalised image, filter the list of objects by those which fit the conditions, then
-filter the labelled image by the pixels whose values are in the set of filtered object IDs
