@@ -16,6 +16,7 @@ if __name__ == "__main__":
     print(f"Starting boke server for {threshold_method}")
     subprocess.Popen(
         ["bokeh", "serve",  "--allow-websocket-origin='*'",
+        "--address", "0.0.0.0",
          threshold_method_gui[threshold_method], "--args", file_name]
         )
     print("let it run")

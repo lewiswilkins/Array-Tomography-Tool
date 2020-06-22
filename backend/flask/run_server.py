@@ -5,6 +5,7 @@ import subprocess
 import time
 from glob import glob
 from pathlib import Path
+import os
 
 from bokeh.client import pull_session
 from bokeh.embed import server_document
@@ -57,10 +58,14 @@ def run_segment_gui(threshold_method: str):
         "fixed": "segment_fixed_bokeh"
     }
     file_name = request.args.get("fileName")
+    os.system("ls -l")
+    os.system("pwd")
     app.running_bokeh_process = subprocess.Popen(
         [
             "bokeh", 
             "serve",  
+            "--address",
+            "0.0.0.0",
             "--allow-websocket-origin=*",
             "--log-level=debug", 
             f"../bokeh/{threshold_method_gui[threshold_method]}.py",

@@ -1,3 +1,4 @@
 #!/bin/bash
 echo "starting backend"
-python backend/flask/run_server.py
+cd flask
+python run_server.py

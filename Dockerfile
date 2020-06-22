@@ -15,8 +15,9 @@ COPY frontend/yarn.lock .
 RUN yarn install
 
 #exposing ports
-EXPOSE 3000
-EXPOSE 5000
+EXPOSE 3000:3000
+EXPOSE 5000:5000
+EXPOSE 5006:5006
 
 WORKDIR /ArrayTomographyTool/
 COPY . /ArrayTomographyTool

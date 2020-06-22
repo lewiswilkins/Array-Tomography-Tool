@@ -9,6 +9,7 @@ test_data/
 *.tif
 *.
 *.csv
+*.log
 
 # dependencies
 node_modules

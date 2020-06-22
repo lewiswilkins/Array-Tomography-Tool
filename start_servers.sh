@@ -2,14 +2,14 @@
 
 
 # Start the first process
-./backend/start_backend.sh >> backend.log 2>&1  &
+cd backend
+./start_backend.sh &> backend.log &
 # status=$?
 # if [ $status -ne 0 ]; then
 #   echo "Failed to start my_first_process: $status"
 #   exit $status
 # fi
-
-cd frontend
+cd ../frontend
 # Start the second process
 ./start_frontend.sh 
 # status=$?
