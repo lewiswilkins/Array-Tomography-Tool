@@ -1,0 +1,23 @@
+# Channels and how they should be colocalised 
+channels: 
+  PSD: 
+    ALZ50: overlap
+    SY38: overlap
+  SY38: 
+    PSD: overlap
+    ALZ50: overlap
+  ALZ50:
+    PSD: overlap
+    SY38: overlap
+
+
+
+
+# Name of output csv file
+output_filename: test.csv
+
+# Resolutions etc.
+xy_resolution: 0.102
+z_resolution: 0.07
+min_overlap: 0.25
+max_distance: 0.5

@@ -1,14 +1,20 @@
 import itertools
 import time
 from math import sqrt
+from multiprocessing import Pool
 from typing import List
 
 import numpy as np
-from numba import njit
+import progressbar
+from numba import njit, prange
+from PIL import Image
 from skimage import measure
 
+from array_tomography_lib import colocalisation_result
+from array_tomography_lib import ChannelFile, ColocalisedChannelFile
 
-def colocalise_pairwise(channels, config):
+
+def colocalise_pairwise(channels: List[ChannelFile], config):
     """Computes the colocalisation for each pair of channels, according to the method.
         Args:
             channels: A list of ChannelFile
@@ -27,7 +33,7 @@ def colocalise_pairwise(channels, config):
     return results
 
 
-def colocalise(channel_1, channel_2, config):
+def colocalise(channel_1, channel_2, method):
     """Computes the colocalisation for a pair of channels with the given method.
         Args:
             channel_1: ChannelFile
@@ -36,26 +42,12 @@ def colocalise(channel_1, channel_2, config):
        Returns:
             a pair of images which only contain the colocalised objects, and a map of
             object -> overlap fraction """
-    channel_1_name = channel_1.channel_name
-    channel_2_name = channel_2.channel_name
-    try:
-        method = config["channels"][channel_1.channel_name][channel_2.channel_name]
-    except KeyError as err:
-        print(f"Cannot get method for {channel_2.channel_name}. Check your config,"\
-    f" you probably havent set a method for {channel_2.channel_name}.")
-        exit()
-    print(f"Colocalising {channel_1.channel_name} with {channel_2.channel_name} based on {method}.")
-    print(f"{len(channel_1.objects)} objects in {channel_1_name}")
-    print(f"{len(channel_2.objects)} objects in {channel_2_name}\n")
+
     if method == "distance":
-        xy_resolution = config["xy_resolution"]
-        z_resolution = config["z_resolution"]
-        max_distance = config["max_distance"]
-        return _compute_distance(
-            channel_1, channel_2, xy_resolution, z_resolution, max_distance
-            )
+        return _compute_distance(channel_1, channel_2)
+        # return
     elif method == "overlap":
-        return _compute_overlap(channel_1, channel_2, min_overlap=config["min_overlap"])
+        return _compute_overlap(channel_1, channel_2)
 
 
 def _read_config(config, channel_1, channel_2):
@@ -68,50 +60,76 @@ def _compute_distance(
     channel_1, channel_2, xy_resolution=0.102, z_resolution=0.07, max_distance=0.5
 ):
     """Compute the distances between each object in channel_1 and channel_2.
-       Find the number of objects in channel_1 which are within max_distance of
-       channel_2."""
-    
+       Find the number of objects in channel_1 which are within max_distance of channel_2."""
     channel_1_centroids = channel_1.centroids
     channel_2_centroids = channel_2.centroids
-    min_distances = {}
-
-
-    for region,channel_1_centroid in zip(channel_1.objects, channel_1_centroids):
+    min_distances = []
+    for channel_1_centroid in channel_1_centroids:
+        channel_2_cropped_centroids = _get_cropped_centroids(channel_2, channel_1_centroid, 10)
         distances = _calculate_distances(
-            channel_1_centroid, channel_2_centroids, xy_resolution, z_resolution
+            channel_1_centroid, channel_2_cropped_centroids, xy_resolution, z_resolution
         )
         min_distance = min(distances)
-        if min_distance < max_distance:
-            min_distances[region.label] = {f"{channel_2.channel_name}_distance" : min_distances}
-    
-    colocalised_image = get_colocalised_image(
-        channel_1.image, min_distances, channel_1.object_coords
-        )
+        if min_distance < min_distance:
+            min_distances.append(min_distances)
 
-    print(f"{channel_1.channel_name} and {channel_2.channel_name}: ")
-    print(f"{len(channel_1_centroids)} objects in channel 1")
-    print(f"Found {len(min_distances)} objects within {max_distance}\n")
-
-    return colocalised_image, min_distances
+    print(f"{channel_1.name} and {channel_2.name}: ")
+    print(f"{len(channel_1.centroids)} objects in channel 1")
+    print(f"Found {len(min_distances)} objects within {max_distance}")
 
 
-@njit(cache=True, fastmath=True)
-def _calculate_distances(
-        centroids, centroids_list, xy_resolution=0.102, z_resolution=0.07
-    ):
-    """Computes the distances between object from channel_1 and all objects in channel_2.
-       Returns a numpy array of the distances."""
+def _get_cropped_centroids(channel, centroid, offset=10):
+    cropped_image = _get_cropped_image(channel.image, centroid, offset)
+    labels = measure.label(cropped_image)
+    regionprops = measure.regionprops(labels)
+    return regionprops.centroid
+
+
+def _get_cropped_image(image, centroid, offset=10):
+    rounded_centroid = np.around(centroid)
+    y = rounded_centroid[1]
+    x = rounded_centroid[2]
+    y_max = image.shape[1]
+    x_max = image.shape[2]
+    x_up = _is_in_range(0, x_max, x + offset)
+    x_down = _is_in_range(0, x_max, x - offset)
+    y_up = _is_in_range(0, y_max, y + offset)
+    y_down = _is_in_range(0, y_max, y - offset)
+
+    return image[:, y_down:y_up, x_down:x_up]
+
+
+def _is_in_range(lower, upper, value):
+    if value < lower:
+        return lower
+    elif value > upper:
+        return upper
+    else:
+        return value
+
+
+def _calculate_distances(channel_1_centroid, channel_2_centroid_list, xy_resolution, z_resolution):
+    difference = channel_2_centroid_list - channel_1_centroid
+    difference_resolved = difference * np.array([xy_resolution, xy_resolution, z_resolution])
     distances = []
-    # Loop over all centroids in channel j and returns the closest distance
-    for i in range(len(centroids_list)):
-        distance = sqrt(
-            pow((centroids[0] - centroids_list[i][0]) * xy_resolution, 2)
-            + pow((centroids[1] - centroids_list[i][1]) * xy_resolution, 2)
-            + pow((centroids[2] - centroids_list[i][2]) * z_resolution, 2)
-        )
-        distances.append(distance)
-    
-    return np.array(distances)
+    for centroid in difference_resolved:
+        distances.append((difference_resolved ** 2).sum())
+
+    return distances
+
+
+# @njit(cache=True, fastmath=True)
+# def _find_best_distance(channel_1_centroid, channel_2_centroids,
+#         xy_resolution=0.102, z_resolution=0.07):
+#     """Computes the distances between object from channel_1 and all objects in channel_2.
+#        Returns a numpy array of the distances."""
+#     difference = channel_2_centroids - channel_1_centroid
+#     difference_resolved = difference * np.array([xy_resolution, xy_resolution, z_resolution])
+#     distances = []
+#     for i in range(len(difference_resolved)):
+#         distances.append((difference_resolved**2).sum())
+
+#     return np.array(distances)
 
 
 def _compute_overlap(channel_1, channel_2, min_overlap=0.25):
@@ -120,51 +138,157 @@ def _compute_overlap(channel_1, channel_2, min_overlap=0.25):
        Compute the regionprops.area for the masked image.
        For each image in channel_1, divide the area of the image by the area of the masked image.
 
-       Create a tuple of (region id, overlap fraction) for overlapping regions
-       in each channel"""
-    channel_1_image = channel_1.labelled_image
-    channel_2_image = channel_2.labelled_image
-    overlapping_pixels = _get_overlap_mask(channel_1_image, channel_2_image)
-    if overlapping_pixels is ValueError:
-        return overlapping_pixels, overlapping_pixels
-    overlapping_parts_ch1 = np.ma.masked_array(channel_1_image, mask=~overlapping_pixels)
+       Create a tuple of (region id, overlap fraction) for overlapping regions in each channel"""
+    overlapping_pixels = _get_overlap_mask(channel_1.image_labels, channel_2.image_labels)
+    overlapping_parts_ch1 = np.ma.masked_array(channel_1.image_labels, mask=~overlapping_pixels)
     overlapping_regions = measure.regionprops(overlapping_parts_ch1)
-    overlaps = {}
-    for region, overlap in zip(channel_1.objects, overlapping_regions):
+    overlaps = []
+    for region, overlap in zip(channel_1.image_regionprops, overlapping_regions):
         overlap_fraction = overlap.area / region.area
         if overlap_fraction >= min_overlap:
-            overlaps[region.label] = {f"{channel_2.channel_name}_overlap" : overlap_fraction}
-
-    # add function here to get image with original objects but only if they overlap
-    colocalised_image = get_colocalised_image(
-        channel_1_image, overlaps, channel_1.object_coords
-        )
-    print(f"{channel_1.channel_name} and {channel_2.channel_name}: ")
-    print(f"{len(channel_1.objects)} objects in channel 1")
+            overlaps.append(overlap_fraction)
+    print(f"{channel_1.name} and {channel_2.name}: ")
+    print(f"{len(channel_1.pixel_list)} objects in channel 1")
     print(f"Found {len(overlaps)} overlapping objects")
-    if len(overlaps) > 0:
-        print(f"mean overlap is {sum(overlaps)/len(overlaps)}\n")
-    else:
-        print("No overlaps found!")
-    return colocalised_image, overlaps
+    print(f"mean overlap is {sum(overlaps)/len(overlaps)}")
 
+    colocalisation_channel_file = 
 
-def get_colocalised_image(original_image, label_list, object_coords):
-    colocalised_image = np.copy(original_image)
-    colocalised_image.fill(0)
-    for label in label_list: 
-        coords = object_coords[label-1]
-        for pixel in coords:
-            if len(pixel) == 2:
-                colocalised_image[pixel[0]][pixel[1]] = 1
-            elif len(pixel) == 3:
-                colocalised_image[pixel[0]][pixel[1]][pixel[2]] = 1
-    
-    return colocalised_image
-    
 def _get_overlap_mask(image_1, image_2):
-    try:
-        return np.logical_and(image_1, image_2)
-    except ValueError as err:
-        print("Images do not have the same dimensions. Please check and retry.")
-        return err
+    return np.logical_and(image_1, image_2)
+
+
+class Colocalisation:
+    def __init__(
+        self,
+        channels_arr=None,
+        xy_resolution=0.102,
+        z_resolution=0.07,
+        max_distance=0.5,
+        min_overlap=25,
+    ):
+        if channels_arr:
+            self.channels_arr = channels_arr
+            self.channel_names = [channel.channel_name for channel in channels_arr]
+            self.results_arr = [
+                colocalisation_result.ColocalisationResult(
+                    self.channels_arr[i].name,
+                    self.channels_arr[i].channel_name,
+                    len(self.channels_arr[i].centroids),
+                    [
+                        names
+                        for names in self.channel_names
+                        if names is not self.channels_arr[i].channel_name
+                    ],
+                )
+                for i in range(len(channels_arr))
+            ]
+        self.xy_resolution = xy_resolution
+        self.z_resolution = z_resolution
+        self.max_distance = max_distance
+        self.min_overlap = min_overlap
+
+    def set_channels_arr(self, channels_arr):
+        self.channels_arr = channels_arr
+
+    # Runs the colocalisation code. Two options are distance or overlap
+    def run_colocalisation(self):
+        for i, channel_i in enumerate(self.channels_arr):
+            print(f"Comparing {channel_i.name} with all other channels.")
+            n_objects_i = len(channel_i.centroids)
+            widgets = [
+                "Progress: ",
+                progressbar.Percentage(),
+                " ",
+                progressbar.Bar(marker=progressbar.RotatingMarker()),
+                " ",
+                progressbar.ETA(),
+                " ",
+                progressbar.FileTransferSpeed(),
+            ]
+            bar = progressbar.ProgressBar(
+                widgets=widgets, max_value=n_objects_i, redirect_stdout=True
+            ).start()
+            for ii in range(n_objects_i):
+                bar.update(ii + 1)
+                for channel_j in self.channels_arr:
+                    if channel_i.channel_name == channel_j.channel_name:
+                        continue
+                    if channel_i.colocalisation_types[channel_j.channel_name] == "distance":
+                        centroid_i = channel_i.centroids[ii]
+                        self.results_arr[i].colocalisations[ii][
+                            channel_j.channel_name
+                        ] = self._run_distance(centroid_i, channel_j)
+                    elif channel_i.colocalisation_types[channel_j.channel_name] == "overlap":
+                        coord_i = channel_i.pixel_list[ii]
+                        self.results_arr[i].colocalisations[ii][
+                            channel_j.channel_name
+                        ] = self._run_overlap(coord_i, channel_j)
+            bar.finish()
+
+    def save_results(self, output_dir):
+        for result in self.results_arr:
+            result.get_results()
+            result.save_to_pickle(output_dir)
+
+    def _run_distance(self, centroid_i, channel_j):
+        centroids_j = channel_j.centroids
+        return self._get_best_distance(
+            centroid_i, centroids_j, self.xy_resolution, self.z_resolution, self.max_distance
+        )
+
+    @staticmethod
+    @njit(cache=True, fastmath=True, nogil=True)
+    def _get_best_distance(
+        centroids, centroids_list, xy_resolution=0.102, z_resolution=0.07, max_distance=0.5
+    ):
+        # Loop over all centroids in channel j and returns the closest distance
+        for i in range(len(centroids_list)):
+            distance = sqrt(
+                pow((centroids[0] - centroids_list[i][0]) * xy_resolution, 2)
+                + pow((centroids[1] - centroids_list[i][1]) * xy_resolution, 2)
+                + pow((centroids[2] - centroids_list[i][2]) * z_resolution, 2)
+            )
+
+            if distance < max_distance:
+                return 1
+        return 0
+
+    def _run_overlap(self, coords_i, channel_j):
+        coords_list_j = channel_j.pixel_list_flat
+        return self._get_overlap(
+            coords_i, coords_list_j, channel_j.pixel_list_index, self.min_overlap
+        )
+
+    @staticmethod
+    @njit(cache=True, fastmath=True, nogil=True, parallel=False)
+    def _get_overlap(coords_i, coords_list_j, index_location, min_overlap):
+        previous_index = 0
+        # loop over the index locations - basically loop over objects
+        for i in range(len(index_location)):
+            index = index_location[i] + previous_index
+            coordiante_j = coords_list_j[
+                previous_index:index
+            ]  # get the section of array which is curen obj
+            coordiante_length = int(len(coordiante_j) / 3)
+            coordiante_j_reshape = coordiante_j.reshape(
+                (coordiante_length, 3)
+            )  # reshape to original
+            # now check how many overlap
+            # - doing manually because intersect1d is not avaiblable in numba
+            n_overlapping = 0
+            for ii in range(len(coords_i)):
+                for jj in range(ii, len(coordiante_j_reshape)):
+                    match = True
+                    for k in range(3):
+                        if coords_i[ii][k] != coordiante_j_reshape[jj][k]:
+                            match = False
+                    if match:
+                        n_overlapping += 1
+                        jj = len(coordiante_j_reshape) - 1
+            # what we really care about is the max number of overlaps between any combination
+            overlap_frac = (n_overlapping / len(coords_i)) * 100
+            if overlap_frac > min_overlap:
+                return 1
+            previous_index = index
+        return 0
