@@ -20,8 +20,11 @@ paste in the following command
 This will take a few mins to download, the image is around 1GB (hope to slim this down in
 the future). Once downloaded run the following command:
 
-`docker run -it -d -v /path/to/files/:/mnt/files/:delegated -p 3000:3000 -p 5000:5000 lewiswilkins/array_tomography_tool:v1.0.0-alpha`
+`docker run -it -d -v /path/to/files/:/mnt/files/:delegated -p 3000:3000 -p
+5000:5000 -p 5006:5006 lewiswilkins/array_tomography_tool:v1.0.0-alpha`
 
+Here, you will need to replace `/path/to/files/` with the path to wherever your
+files are.
 Then, open your web browser (this is tested in Safari and Chrome so far) and
 navigate to `localhost:3000`. This may take a few seconds to load while the
 services are getting up and running in the Docker container. You should then see
