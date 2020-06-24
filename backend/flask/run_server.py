@@ -50,8 +50,6 @@ def get_colocalisation_logs(job_id, parameter):
 
 @app.route('/colocalisation/<job_id>/')
 def kill_job(job_id):
-    print("in coloc")
-    print(app.colocalisation_jobs)
     app.colocalisation_jobs[int(job_id)].kill()
 
     return job_id
