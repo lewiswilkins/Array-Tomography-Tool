@@ -1,30 +1,23 @@
 import React, {useState, useReducer } from "react";
-import { makeStyles} from '@material-ui/core/styles';
+import { makeStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import Typography from "@material-ui/core/Typography";
-import Paper from '@material-ui/core/Paper';
-import TextField from '@material-ui/core/TextField';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import List from '@material-ui/core/List';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
-import FormHelperText from '@material-ui/core/FormHelperText';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
 import Grid from '@material-ui/core/Grid';
-import { stat } from "fs";
-import fetch from 'isomorphic-fetch';
-import { ThemeProvider } from '@material-ui/styles';
 import TopContent from "../components/TopContent";
 import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
 import StepLabel from '@material-ui/core/StepLabel';
-import useInterval from '@use-it/interval';
-import {configReducer, channelsReducer} from '../hooks/configReducer';
-import { TextInput, NumericalInput} from '../components/Inputs';
+import { configReducer, channelsReducer } from '../hooks/configReducer';
+import { TextInput, NumericalInput } from '../components/Inputs';
 import { ParameterTable } from '../components/ParameterTable';
-import { postConfig, getLog } from '../functions/fetchFunctions';
+import { postConfig, killJob } from '../functions/fetchFunctions';
 import { LogDisplay } from '../components/LogDisplay';
 
 
@@ -372,43 +365,10 @@ const ColocalisationConfirmation = (props: any) => {
 }
 
 const ColocalisationRunning = (props: any) => {
-    // console.log(props.jobId)
-    // const [nImagesProcessed, setNImagesProcessed] = React.useState();
-    // const [caseName, setCaseName] = React.useState();
-    // const [colocalising, setColocalising] = React.useState();
-
-    // useInterval(() => {
-    //     getLog(props.jobId, "images_processed").then(setNImagesProcessed);
-    //     getLog(props.jobId, "case_name").then(setCaseName);
-    //     getLog(props.jobId, "colocalising").then(setColocalising);
-    // }, 1000);
-
-    // let nImages;
-    // if(nImagesProcessed == "Finished!"){
-    //     nImages = <Typography variant="h5">{nImagesProcessed}</Typography>
-    // }
-    // else{
-    //     nImages = <Typography variant="h5">Processing image {nImagesProcessed}</Typography>
-    // }
-
-
-    
-    // return (
-    //     <div>
-    //         <Typography variant="h5">Your job has been submitted!</Typography>
-    //         {nImages}
-    //         <Typography variant="h5">{caseName}</Typography>
-    //         <Typography variant="h5">{colocalising}</Typography>
-    //     </div>
-    // );
-
     return (
         <LogDisplay jobId={props.jobId} parameter="colocalisation"/>
     )
 }
-
-
-
 
 function getSteps() {
     return [
@@ -431,7 +391,6 @@ export  function HorizontalLabelPositionBelowStepper() {
     const handleNext = () => {
         if(activeStep==0){
             const date = new Date();
-            console.log(date.getTime());
             dispatch({type: "job_id", value: date.getTime()});
         }
         else if(activeStep==1){
@@ -454,6 +413,10 @@ export  function HorizontalLabelPositionBelowStepper() {
     const handleReset = () => {
         setActiveStep(0);
     };
+
+    const handleKillJob = () => {
+        killJob("colocalisation", configState.job_id);
+    }
 
     // Handling config update   
 
@@ -572,6 +535,7 @@ export  function HorizontalLabelPositionBelowStepper() {
                 {stepperContent}
                 </div>
                 <Button onClick={handleReset}>Reset</Button>
+                
             </div>
             ) : (
             <div>
@@ -589,6 +553,7 @@ export  function HorizontalLabelPositionBelowStepper() {
                 <Button variant="contained" color="primary" onClick={handleNext}>
                     {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
                 </Button>
+                {activeStep === steps.length - 1 ? <Button onClick={handleKillJob}>Kill job?</Button> : <div/>}
                 </div>
             </div>
             )}
