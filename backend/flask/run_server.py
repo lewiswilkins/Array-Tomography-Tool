@@ -37,8 +37,7 @@ def run_colocalisation():
                     ["../api/colocalisation_api.py", json.dumps(config)],
                     stdout=log, stderr=log
                 )
-        
-        print(app.colocalisation_jobs)
+
         return config
 
 

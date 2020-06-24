@@ -58,6 +58,7 @@ def server_run_colocalisation(config: dict):
     out_dir = config["output_dir"]
     utils.check_dir_exists(in_dir)
     utils.check_dir_exists(out_dir)
+    save_config(config)
 
     case_stack_names = get_names(in_dir)
     for i,name in enumerate(case_stack_names):
@@ -161,11 +162,19 @@ def get_names(dir_path):
         match = r.match(filename)
         name = match.group(1)
         names.add(name)
-    return list(names)
+    names = list(names)
+    names.sort()
+    
+    return names
 
 def get_channels(name, channels, dir_path):
     channels = [f"{dir_path}/{name}-{channel}.tif" for channel in channels]
     return channels
+
+def save_config(config):
+    config_filename = f"{config['output_dir']}/{config['job_id']}_config.txt"
+    with open(config_filename, "w") as config_file:
+        yaml.dump(config, config_file, indent=True)
 
 
 if __name__ == "__main__":
