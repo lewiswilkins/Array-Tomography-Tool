@@ -24,3 +24,13 @@ export const getLog = async (jobId: string, parameter: string) =>{
 
     return data;
 }
+
+export const killJob = (endpoint: string, jobId: string) => {
+    return fetch(`http://127.0.0.1:5000/${endpoint}/${jobId}/`, {
+        mode: 'cors', 
+        cache: 'no-cache',
+        headers: {
+            'Access-Control-Allow-Origin':'',
+        },
+    });
+}

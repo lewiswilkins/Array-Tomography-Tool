@@ -16,7 +16,6 @@ from lib import segmentation, utils
 
 app = Flask(__name__)
 
-running_bokeh_process = None
 
 def get_log(job_id: str, parameter: str) -> str: 
     try:
@@ -31,13 +30,15 @@ def get_log(job_id: str, parameter: str) -> str:
 def run_colocalisation():
     if request.method == "POST":
         config = request.json
-        utils.mkdir(f"/tmp/{config['job_id']}/")
-        with open(f"/tmp/{config['job_id']}/colocalisation.out", "w") as log:
-            subprocess.Popen(
-                ["../api/colocalisation_api.py", json.dumps(config)],
-                stdout=log, stderr=log
-            )
+        job_id = config['job_id']
+        utils.mkdir(f"/tmp/{job_id}/")
+        with open(f"/tmp/{job_id}/colocalisation.out", "w") as log:
+            app.colocalisation_jobs[job_id] = subprocess.Popen(
+                    ["../api/colocalisation_api.py", json.dumps(config)],
+                    stdout=log, stderr=log
+                )
         
+        print(app.colocalisation_jobs)
         return config
 
 
@@ -47,6 +48,13 @@ def get_colocalisation_logs(job_id, parameter):
     
     return log
 
+@app.route('/colocalisation/<job_id>/')
+def kill_job(job_id):
+    print("in coloc")
+    print(app.colocalisation_jobs)
+    app.colocalisation_jobs[int(job_id)].kill()
+
+    return job_id
 
 @app.route('/segment/gui/<threshold_method>/')
 def run_segment_gui(threshold_method: str):
@@ -124,7 +132,10 @@ def run_alignment():
         Path(f"/tmp/{config['job_id']}/test.out").write_text(t_message)
         
         return config
+
+
 if __name__ == '__main__':
     CORS(app, support_credentials=True)
     app.running_bokeh_process = None
+    app.colocalisation_jobs = {}
     app.run(host='0.0.0.0')
