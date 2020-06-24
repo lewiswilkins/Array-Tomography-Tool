@@ -24,6 +24,10 @@ class File:
         self.channel_name = channel_name
         self.output_file_name = None
 
+    def __lt__(self, other):
+         return f"{self.name}-{self.channel_name}" < f"{other.name}-{other.channel_name}"
+
+
     @classmethod
     def from_tiff(cls, file_path):
         # will need to try to load from pickle cache first
@@ -53,6 +57,7 @@ class File:
             plugin="tifffile",
             check_contrast=False
         )
+    
 
 
 class SegmentedFile(File):
