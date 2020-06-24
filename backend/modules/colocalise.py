@@ -79,6 +79,7 @@ def process_stack(
 
     colocalised_results = []
     t_colocalise_s = time.time()
+    channels.sort()
     for channel_1  in channels:
         logger.info(f"Colocalising {channel_1.channel_name} with all other channels.")
         temp_colocalised_result = ColocalisationResult.from_channel_file(channel_1)
