@@ -30,7 +30,7 @@ navigate to `localhost:3000`. This may take a few seconds to load while the
 services are getting up and running in the Docker container. You should then see
 the welcome screen! 
 
-![Home page](images/home.png?raw=true "Title")
+![Home page](images/home.png?raw=true "Home page")
 
 Instructions on how to each module will be included on their respective pages.
 For now it should all be fairly self explanatory. One thing to bear in mind -
@@ -38,6 +38,12 @@ when prompted for a path to an input or output directory, always prefix your
 path with `/mnt/files/`. So, for example, if you wanted to navigate to a file
 called `yourFile.txt` which is in `yourDir`, the full path would be
 `/mnt/files/yourDir/yourFile.txt`.
+
+#### Segmentation visualiser
+![Segmentation visualiser](images/segment_visualiser.png?raw=true "Segmentation visualiser")
+
+#### Colocalisation
+![Colocalisation](images/coloc.png?raw=true "Colocalisation")
 
 
 ### Running from the command line
