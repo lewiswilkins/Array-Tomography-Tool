@@ -30,6 +30,8 @@ navigate to `localhost:3000`. This may take a few seconds to load while the
 services are getting up and running in the Docker container. You should then see
 the welcome screen! 
 
+![Home page](images/home.png?raw=true "Title")
+
 Instructions on how to each module will be included on their respective pages.
 For now it should all be fairly self explanatory. One thing to bear in mind -
 when prompted for a path to an input or output directory, always prefix your
